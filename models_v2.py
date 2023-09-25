@@ -5,7 +5,8 @@ import torch
 import torch.nn as nn
 from functools import partial
 
-from timm.models.vision_transformer import Mlp, PatchEmbed , _cfg
+from timm.models.vision_transformer import VisionTransformer, _cfg, PatchEmbed, Block
+from timm.models.vision_transformer_hybrid import HybridEmbed
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
@@ -250,7 +251,7 @@ class vit_models(nn.Module):
         
         x = torch.cat((cls_tokens, x), dim=1)
             
-        for i , blk in enumerate(self.blocks):
+        for i, blk in enumerate(self.blocks):
             x = blk(x)
             
         x = self.norm(x)
