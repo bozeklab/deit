@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from functools import partial
 
-from timm.models.vision_transformer import VisionTransformer, _cfg, PatchEmbed, Block
+from timm.models.vision_transformer import Mlp, VisionTransformer, _cfg, PatchEmbed, Block
 from timm.models.vision_transformer_hybrid import HybridEmbed
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
