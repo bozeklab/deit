@@ -5,8 +5,8 @@ import torch.nn as nn
 import random
 from functools import partial
 
-from timm.models.vision_transformer import VisionTransformer, _cfg, HybridEmbed, PatchEmbed, Block
-from timm.models.registry import register_model
+from timm.models.vision_transformer import VisionTransformer, _cfg, PatchEmbed, Block
+from timm.models.vision_transformer_hybrid import HybridEmbed
 from timm.models.layers import trunc_normal_
 
 from mask_const import DIVISION_MASKS_14_14
