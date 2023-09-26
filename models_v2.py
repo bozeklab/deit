@@ -305,8 +305,15 @@ class vit_models(nn.Module):
             xs = self.split_input(x, M)
 
             # run separately
-            subencoder = nn.Sequential(*self.blocks[:K])
-            xs = [subencoder(x) for x in xs]
+            #subencoder = nn.Sequential(*self.blocks[:K])
+            prefix = []
+            for x in xs:
+                _x = x
+                for b in self.blocks[:K]:
+                    _x = b(_x)
+                prefix.append(_x)
+
+            xs = prefix
 
             # mixing
             xs_cls = torch.stack([x[:, [0], :] for x in xs])
