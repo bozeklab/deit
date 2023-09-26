@@ -3,6 +3,7 @@
 
 import torch
 import torch.nn as nn
+import random
 from functools import partial
 
 from timm.models.vision_transformer import Mlp, VisionTransformer, _cfg, PatchEmbed, Block
@@ -10,6 +11,9 @@ from timm.models.vision_transformer_hybrid import HybridEmbed
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
+
+from mask_const import DIVISION_MASKS_14_14
+
 
 class Attention(nn.Module):
     # taken from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
@@ -241,25 +245,102 @@ class vit_models(nn.Module):
         self.num_classes = num_classes
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
+    def split_input(self, x, M):
+        precomputed_masks = DIVISION_MASKS_14_14[M]
+
+        mask_id = random.randint(0, len(precomputed_masks) - 1)
+        masks = precomputed_masks[mask_id]
+        masks = [torch.tensor(mask).unsqueeze(0) for mask in masks]
+
+        masks = [torch.cat([torch.ones(mask.shape[0], 1, dtype=bool, device=mask.device), mask.flatten(1)], dim=1) for mask in masks]
+
+        xs = []
+        for mask in masks:
+            if mask.shape[0] == 1:
+                xs.append(x[:, mask[0, :]].reshape(x.shape[0], -1, x.shape[-1]))
+            else:
+                xs.append(x[mask].reshape(x.shape[0], -1, x.shape[-1]))
+        return xs
+
     def forward_features(self, x):
         B = x.shape[0]
         x = self.patch_embed(x)
 
         cls_tokens = self.cls_token.expand(B, -1, -1)
-        
+
         x = x + self.pos_embed
-        
+
         x = torch.cat((cls_tokens, x), dim=1)
-            
+
         for i, blk in enumerate(self.blocks):
             x = blk(x)
-            
+
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x):
+    def comp_forward_afterK(self, x, out_feat_keys, K, M):
+        if out_feat_keys is None:
+            out_feat_keys = []
 
-        x = self.forward_features(x)
+        B = x.shape[0]
+        x = self.patch_embed(x)
+
+        cls_tokens = self.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
+        x = torch.cat((cls_tokens, x), dim=1)
+        x = x + self.pos_embed
+        x = self.pos_drop(x)
+
+        xs = self.split_input(x, M)
+        out_feats = [("BLK" if "BLK" in k else "CLS", int(k[len("concat___"):]) if "concat" in k else 1) for k in
+                     out_feat_keys]
+        n_blk_save = max([n for name, n in out_feats if name == "BLK"] + [0])
+        n_cls_save = max([n for name, n in out_feats if name == "CLS"] + [0])
+
+        after_i_blocks_save_blk = len(self.blocks) - n_blk_save + 1
+        after_i_blocks_save_cls = len(self.blocks) - n_cls_save + 1
+        after_i_blocks_save = min(after_i_blocks_save_blk, after_i_blocks_save_cls)
+        assert (after_i_blocks_save >= K)
+
+        # run separately
+        subencoder = nn.Sequential(*self.blocks[:K])
+        xs = [subencoder(x) for x in xs]
+
+        # mixing
+        xs_cls = torch.stack([x[:, [0], :] for x in xs])
+        xs_feats = [x[:, 1:, :] for x in xs]
+        x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
+
+        for blk in self.blocks[K:after_i_blocks_save]:
+            x = blk(x)
+
+        # extract
+        blk_feats = []
+        cls_feats = []
+
+        if after_i_blocks_save >= after_i_blocks_save_blk:
+            blk_feats.append(self.norm(x))
+        if after_i_blocks_save >= after_i_blocks_save_cls:
+            cls_feats.append(self.norm(x[:, 0, :]))
+
+        for i, blk in enumerate(self.blocks[after_i_blocks_save:]):
+            x = blk(x)
+            if i + after_i_blocks_save >= after_i_blocks_save_blk:
+                blk_feats.append(self.norm(x))
+            if i + after_i_blocks_save >= after_i_blocks_save_cls:
+                cls_feats.append(self.norm(x[:, 0, :]))
+
+        if len(out_feats) > 0:
+            output = [
+                torch.cat(cls_feats[-n:], dim=-1) if feat == "CLS" else torch.cat(blk_feats[-n:], dim=-1)
+                for feat, n in out_feats
+            ]
+        else:
+            output = x[:, 0, :]
+        return output
+
+    def forward(self, sample):
+        x, K, M = sample
+        x = self.comp_forward_afterK(x, ['lastBLK'], K, M)[0]
         
         if self.dropout_rate:
             x = F.dropout(x, p=float(self.dropout_rate), training=self.training)
