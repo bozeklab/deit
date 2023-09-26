@@ -341,7 +341,7 @@ class vit_models(nn.Module):
             output = x[:, 0, :]
         return output
 
-    def forward(self, x, sample):
+    def forward(self, sample):
         x, K, M = sample
         x = self.comp_forward_afterK(x, ['lastCLS'], K, M)[0]
         
