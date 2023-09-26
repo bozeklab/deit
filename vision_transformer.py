@@ -195,8 +195,7 @@ class CompVisionTransformer(nn.Module):
         x = self.pre_logits(x)
         return x
 
-    def forward(self, sample):
-        x, K, M = sample
+    def forward(self, K=0, M=1):
         x = self.comp_forward_afterK(x, ['lastCLS'], K, M)
         x = self.pre_logits(x[0])
         x = self.head(x)
