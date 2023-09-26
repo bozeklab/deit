@@ -15,6 +15,7 @@ def _generate_masks(xs, ys):
     return masks
 
 DIVISION_SPECS_14_14 = {
+    1: {"xs": [14], "ys": [14]},
     2: {"xs": [14], "ys": [7, 7]},
     4: {"xs": [7, 7], "ys": [7, 7]},
     8: {"xs": [7, 7], "ys": [4, 3, 3, 4]},

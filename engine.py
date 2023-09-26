@@ -47,7 +47,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         with torch.cuda.amp.autocast():
             K = random.randint(0, 12)
             M = random.choice([2, 3, 4, 6, 8, 9, 12, 16])
-            outputs = model((samples, K, M))
+            outputs = model(samples, K, M)
             if not args.cosub:
                 loss = criterion(samples, outputs, targets)
             else:
@@ -98,7 +98,7 @@ def evaluate(data_loader, model, device):
 
         # compute output
         with torch.cuda.amp.autocast():
-            output = model((images, 0, 2))
+            output = model(images, 0, 1)
             loss = criterion(output, target)
 
         acc1, acc5 = accuracy(output, target, topk=(1, 5))

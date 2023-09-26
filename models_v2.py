@@ -339,8 +339,7 @@ class vit_models(nn.Module):
             output = x[:, 0, :]
         return output
 
-    def forward(self, sample):
-        x, K, M = sample
+    def forward(self, x, K=0, M=1):
         x = self.comp_forward_afterK(x, ['lastCLS'], K, M)[0]
         
         if self.dropout_rate:
