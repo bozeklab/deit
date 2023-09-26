@@ -286,9 +286,10 @@ class vit_models(nn.Module):
         x = self.patch_embed(x)
 
         cls_tokens = self.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
-        x = torch.cat((cls_tokens, x), dim=1)
+
         x = x + self.pos_embed
-        x = self.pos_drop(x)
+
+        x = torch.cat((cls_tokens, x), dim=1)
 
         xs = self.split_input(x, M)
         out_feats = [("BLK" if "BLK" in k else "CLS", int(k[len("concat___"):]) if "concat" in k else 1) for k in
@@ -340,7 +341,7 @@ class vit_models(nn.Module):
 
     def forward(self, sample):
         x, K, M = sample
-        x = self.comp_forward_afterK(x, ['lastBLK'], K, M)[0]
+        x = self.comp_forward_afterK(x, ['lastCLS'], K, M)[0]
         
         if self.dropout_rate:
             x = F.dropout(x, p=float(self.dropout_rate), training=self.training)
