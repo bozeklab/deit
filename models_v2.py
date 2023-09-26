@@ -291,7 +291,6 @@ class vit_models(nn.Module):
 
         x = torch.cat((cls_tokens, x), dim=1)
 
-        xs = self.split_input(x, M)
         out_feats = [("BLK" if "BLK" in k else "CLS", int(k[len("concat___"):]) if "concat" in k else 1) for k in
                      out_feat_keys]
         n_blk_save = max([n for name, n in out_feats if name == "BLK"] + [0])
@@ -302,17 +301,20 @@ class vit_models(nn.Module):
         after_i_blocks_save = min(after_i_blocks_save_blk, after_i_blocks_save_cls)
         assert (after_i_blocks_save >= K)
 
-        # run separately
-        subencoder = nn.Sequential(*self.blocks[:K])
-        xs = [subencoder(x) for x in xs]
+        if K > 0 and M > 1:
+            xs = self.split_input(x, M)
 
-        # mixing
-        xs_cls = torch.stack([x[:, [0], :] for x in xs])
-        xs_feats = [x[:, 1:, :] for x in xs]
-        x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
+            # run separately
+            subencoder = nn.Sequential(*self.blocks[:K])
+            xs = [subencoder(x) for x in xs]
 
-        for blk in self.blocks[K:after_i_blocks_save]:
-            x = blk(x)
+            # mixing
+            xs_cls = torch.stack([x[:, [0], :] for x in xs])
+            xs_feats = [x[:, 1:, :] for x in xs]
+            x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
+
+            for blk in self.blocks[K:after_i_blocks_save]:
+                x = blk(x)
 
         # extract
         blk_feats = []
