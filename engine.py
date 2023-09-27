@@ -99,8 +99,8 @@ def evaluate(data_loader, model, device):
         # compute output
         with torch.cuda.amp.autocast():
             output = model((images, 0, 1))
-            output_8_16 = model(images, 8, 16)
-            output_4_16 = model(images, 4, 16)
+            #output_8_16 = model(images, 8, 16)
+            #output_4_16 = model(images, 4, 16)
             loss = criterion(output, target)
 
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
