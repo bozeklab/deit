@@ -2,7 +2,7 @@ import numpy as np
 
 def _generate_masks(xs, ys):
     masks = []
-    zeros = np.zeros([14,14], dtype=bool)
+    zeros = np.zeros([sum(xs),sum(ys)], dtype=bool)
     y_offset = 0
     for y in ys:
         x_offset = 0
@@ -13,6 +13,11 @@ def _generate_masks(xs, ys):
             x_offset += x
         y_offset += y
     return masks
+
+def division_masks_from_spec(specs):
+    wides = {k: _generate_masks(**v) for k, v in specs.items()}
+    ret = {k: [masks, [np.rot90(m).copy() for m in masks]] for k, masks in wides.items()}
+    return ret
 
 DIVISION_SPECS_14_14 = {
     1: {"xs": [14], "ys": [14]},
@@ -26,5 +31,19 @@ DIVISION_SPECS_14_14 = {
     12: {"xs": [4, 3, 3, 4], "ys": [5, 4, 5]},
 }
 
-DIVISION_MASKS_WIDE_14_14 = {k: _generate_masks(**v) for k, v in DIVISION_SPECS_14_14.items()}
-DIVISION_MASKS_14_14 = {k: [masks, [np.rot90(m).copy() for m in masks]] for k, masks in DIVISION_MASKS_WIDE_14_14.items()}
+DIVISION_SPECS_12_12 = {
+    1: {"xs": [12], "ys": [12]},
+    2: {"xs": [12], "ys": [6, 6]},
+    4: {"xs": [6, 6], "ys": [6, 6]},
+    8: {"xs": [6, 6], "ys": [3, 3, 3, 3]},
+    16: {"xs": [3, 3, 3, 3], "ys": [3, 3, 3, 3]},
+    3: {"xs": [12], "ys": [4, 4, 4]},
+    6: {"xs": [6, 6], "ys": [4, 4, 4]},
+    9: {"xs": [4, 4, 4], "ys": [4, 4, 4]},
+    12: {"xs": [3, 3, 3, 3], "ys": [4, 4, 4]},
+}
+
+DIVISION_MASKS = {
+    12: division_masks_from_spec(DIVISION_SPECS_12_12),
+    14: division_masks_from_spec(DIVISION_SPECS_14_14)
+}
