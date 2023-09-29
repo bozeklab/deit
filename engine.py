@@ -47,7 +47,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         with torch.cuda.amp.autocast():
             K = random.randint(0, 12)
             M = random.choice([2, 3, 4, 6, 8, 9, 12, 16])
-            outputs = model((samples, K, M))
+            outputs = model((samples, 0, 1))
             if not args.cosub:
                 loss = criterion(samples, outputs, targets)
             else:
@@ -99,16 +99,22 @@ def evaluate(data_loader, model, device):
         # compute output
         with torch.cuda.amp.autocast():
             output = model((images, 0, 1))
-            #output_8_16 = model(images, 8, 16)
-            #output_4_16 = model(images, 4, 16)
+            output_8_16 = model((images, 8, 16))
+            output_4_16 = model((images, 4, 16))
             loss = criterion(output, target)
-
+            
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        acc1_8_16, acc5_8_16 = accuracy(output_8_16, target, topk=(1, 5))
+        acc1_4_16, acc5_4_16 = accuracy(output_4_16, target, topk=(1, 5))
 
         batch_size = images.shape[0]
         metric_logger.update(loss=loss.item())
         metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
         metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+        metric_logger.meters['acc1_8_16'].update(acc1_8_16.item(), n=batch_size)
+        metric_logger.meters['acc5_8_16'].update(acc5_8_16.item(), n=batch_size)
+        metric_logger.meters['acc1_4_16'].update(acc1_4_16.item(), n=batch_size)
+        metric_logger.meters['acc5_4_16'].update(acc5_4_16.item(), n=batch_size)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'

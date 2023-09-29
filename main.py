@@ -411,7 +411,11 @@ def main(args):
         lr_scheduler.step(args.start_epoch)
     if args.eval:
         test_stats = evaluate(data_loader_val, model, device)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")        
+        
+        if args.output_dir and utils.is_main_process():
+            with (output_dir / "log.txt").open("a") as f:
+                f.write(json.dumps(test_stats) + "\n")
         return
 
     print(f"Start training for {args.epochs} epochs")
