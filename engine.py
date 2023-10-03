@@ -6,7 +6,7 @@ Train and eval functions used in main.py
 import math
 import sys
 import random
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Callable, Dict
 
 import torch
 
@@ -47,7 +47,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         with torch.cuda.amp.autocast():
             K = random.randint(0, 12)
             M = random.choice([2, 3, 4, 6, 8, 9, 12, 16])
-            outputs = model((samples, 0, 1))
+            outputs = model((samples, K, M))
             if not args.cosub:
                 loss = criterion(samples, outputs, targets)
             else:
@@ -80,17 +80,16 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
     if ext_logger is not None:
-    ext_logger({
-        'Train/Loss': metric_logger.loss.global_avg,
-        'Train/LR': metric_logger.lr.global_avg
-    }, epoch)
+        ext_logger({
+            'Train/Loss': metric_logger.loss.global_avg,
+            'Train/LR': metric_logger.lr.global_avg
+        }, epoch)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None):
-    criterion = torch.nn.CrossEntropyLoss()
-
+def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None, KMs = [[0,1], [8,16], [4,16]], seq: bool = False):
+    assert [0, 1] in KMs
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
 
@@ -103,31 +102,30 @@ def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callab
 
         # compute output
         with torch.cuda.amp.autocast():
-            output = model((images, 0, 1))
-            output_8_16 = model((images, 8, 16))
-            output_4_16 = model((images, 4, 16))
-            loss = criterion(output, target)
-            
-        acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        acc1_8_16, acc5_8_16 = accuracy(output_8_16, target, topk=(1, 5))
-        acc1_4_16, acc5_4_16 = accuracy(output_4_16, target, topk=(1, 5))
+            outputs = [
+                [[k, m], model((images, k, m, seq))]
+                for k, m in KMs
+            ]
+        
+        accuracies = [
+            [[k, m, i], accuracy(out, target)[0]]
+            for [[k, m], outs] in outputs
+            for i, out in (enumerate(outs) if seq else [[0, outs]])
+        ]
 
         batch_size = images.shape[0]
-        metric_logger.update(loss=loss.item())
-        metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
-        metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
-        metric_logger.meters['acc1_8_16'].update(acc1_8_16.item(), n=batch_size)
-        metric_logger.meters['acc5_8_16'].update(acc5_8_16.item(), n=batch_size)
-        metric_logger.meters['acc1_4_16'].update(acc1_4_16.item(), n=batch_size)
-        metric_logger.meters['acc5_4_16'].update(acc5_4_16.item(), n=batch_size)
+        for [[k, m, i], acc] in accuracies:
+            name = 'acc1'
+            if [k, m] != [0, 1]:
+                name += f"_K{k}_M{m}"
+            if seq:
+                name += f"_i{i}"
+            metric_logger.meters[name].update(acc.item(), n=batch_size)
+        
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
-          .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
+    
     if ext_logger is not None:  
-        ext_logger({    
-            'Eval/Acc@1': metric_logger.acc1.global_avg,    
-            'Eval/Acc@5': metric_logger.acc5.global_avg,    
-            'Eval/Loss': metric_logger.loss.global_avg  
-        }, epoch)
+        dic = {f'Eval/{k}': v.global_avg for k, v in metric_logger.meters.items()}
+        ext_logger(dic, epoch)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}

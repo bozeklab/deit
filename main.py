@@ -189,8 +189,8 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
 
 
-    parser.add_argument('--memfs-imnet', default=False, type=bool, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--log-to-wandb', default=True, type=bool, action=argparse.BooleanOptionalAction,   
+    parser.add_argument('--memfs_imnet', action="store_true")
+    parser.add_argument('--log_to_wandb', action="store_true",   
                         help='log to weights and biases dashboard') 
     parser.add_argument('--wandb_run_name', default=None, type=str, 
                         help='log to weights and biases dashboard') 
@@ -206,7 +206,7 @@ def main(args):
 
     print(args)
 
-    ext_logger: Optional[Callable[[Dict, int], None]] = None
+    ext_logger = None
     if args.log_to_wandb and utils.is_main_process():   
         import wandb    
         wandb.login()   
@@ -444,7 +444,6 @@ def main(args):
         lr_scheduler.step(args.start_epoch)
     if args.eval:
         test_stats = evaluate(data_loader_val, model, device, ext_logger=ext_logger)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")        
         
         if args.output_dir and utils.is_main_process():
             with (output_dir / "log.txt").open("a") as f:

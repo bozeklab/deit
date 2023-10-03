@@ -11,6 +11,7 @@ from timm.models.vision_transformer_hybrid import HybridEmbed
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
+import torch.nn.functional as F
 
 from mask_const import DIVISION_MASKS
 
@@ -247,6 +248,22 @@ class vit_models(nn.Module):
         self.num_classes = num_classes
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
+    def forward_features(self, x):
+        B = x.shape[0]
+        x = self.patch_embed(x)
+
+        cls_tokens = self.cls_token.expand(B, -1, -1)
+
+        x = x + self.pos_embed
+
+        x = torch.cat((cls_tokens, x), dim=1)
+
+        for i, blk in enumerate(self.blocks):
+            x = blk(x)
+
+        x = self.norm(x)
+        return x[:, 0]
+
     def split_input(self, x, M):
         precomputed_masks = self.division_masks[M]
 
@@ -264,32 +281,46 @@ class vit_models(nn.Module):
                 xs.append(x[mask].reshape(x.shape[0], -1, x.shape[-1]))
         return xs
 
-    def forward_features(self, x):
+    def prepare_tokens(self, x):
         B = x.shape[0]
         x = self.patch_embed(x)
 
         cls_tokens = self.cls_token.expand(B, -1, -1)
-
+        
         x = x + self.pos_embed
+        x = torch.cat([cls_tokens, x], dim=1)
+        return x
 
-        x = torch.cat((cls_tokens, x), dim=1)
+    def comp_seq(self, x, K, M):
+        x = self.prepare_tokens(x)
+        
+        def subencoder(x):
+            for blk in self.blocks[:K]:
+                x = blk(x)
+            return x
+        
+        xs = self.split_input(x, M)
+        xs = [subencoder(x) for x in xs]
+        random.shuffle(xs)
 
-        for i, blk in enumerate(self.blocks):
-            x = blk(x)
-
-        x = self.norm(x)
-        return x[:, 0]
+        cls_mean = torch.zeros_like(xs[0][:,[0],:])
+        xs_feats = []
+        ret = []
+        for i, x in enumerate(xs):
+            cls_mean = cls_mean * i/(i+1) + x[:,[0], :] / (i+1)
+            xs_feats.append(x[:,1:,:])
+            x = torch.cat([cls_mean] + xs_feats, dim=1)
+            
+            for blk in self.blocks[K:]:
+                x = blk(x)
+            
+            x = self.norm(x)
+            ret.append(x[:, 0])
+        return ret
 
     def comp_forward_afterK(self, x, K, M):
         B = x.shape[0]
-        x = self.patch_embed(x)
-
-        cls_tokens = self.cls_token.expand(B, -1, -1)
-
-        x = x + self.pos_embed
-
-        x = torch.cat((cls_tokens, x), dim=1)
-
+        x = self.prepare_tokens(x)
 
 
         def subencoder(x):
@@ -327,8 +358,18 @@ class vit_models(nn.Module):
         return x[:, 0]
 
     def forward(self, sample):
-        x, K, M = sample
-        x = self.comp_forward_afterK(x, K, M)
+        if len(sample) == 3:
+            x, K, M = sample
+            seq = False
+        elif len(sample) == 4:
+            x, K, M, seq = sample
+        else:
+            raise NotImplementedError()
+        
+        if seq:
+            x = self.comp_seq(x, K, M)
+        else:
+            x = self.comp_forward_afterK(x, K, M)
         
         if self.dropout_rate:
             x = F.dropout(x, p=float(self.dropout_rate), training=self.training)
