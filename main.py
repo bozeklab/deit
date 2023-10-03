@@ -28,6 +28,8 @@ import models_v2
 
 import utils
 
+from prepare_imagenet_memfs import prepare_imagenet
+
 
 def get_args_parser():
     parser = argparse.ArgumentParser('DeiT training and evaluation script', add_help=False)
@@ -185,6 +187,17 @@ def get_args_parser():
     parser.add_argument('--world_size', default=1, type=int,
                         help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
+
+
+    parser.add_argument('--memfs-imnet', default=False, type=bool, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--log-to-wandb', default=True, type=bool, action=argparse.BooleanOptionalAction,   
+                        help='log to weights and biases dashboard') 
+    parser.add_argument('--wandb_run_name', default=None, type=str, 
+                        help='log to weights and biases dashboard') 
+    parser.add_argument('--wandb_model_name', default=None, type=str,   
+                        help='log to weights and biases dashboard')
+
+
     return parser
 
 
@@ -192,6 +205,22 @@ def main(args):
     utils.init_distributed_mode(args)
 
     print(args)
+
+    ext_logger: Optional[Callable[[Dict, int], None]] = None
+    if args.log_to_wandb and utils.is_main_process():   
+        import wandb    
+        wandb.login()   
+        wandb.init( 
+            # Set the project where this run will be logged 
+            project="compvit",   
+            # Track hyperparameters and run metadata    
+            config=vars(args),  
+            name=args.wandb_run_name    
+        )   
+        def log_to_wandb(log_dict, step):   
+            if utils.is_main_process(): 
+                wandb.log(log_dict, step=step)  
+        ext_logger = log_to_wandb
 
     if args.distillation_type != 'none' and args.finetune and not args.eval:
         raise NotImplementedError("Finetuning with distillation not yet supported")
@@ -205,6 +234,10 @@ def main(args):
     # random.seed(seed)
 
     cudnn.benchmark = True
+
+    if args.memfs_imnet:
+        args.data_path = prepare_imagenet(args.data_path)
+
 
     dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
     dataset_val, _ = build_dataset(is_train=False, args=args)
@@ -410,7 +443,7 @@ def main(args):
                 loss_scaler.load_state_dict(checkpoint['scaler'])
         lr_scheduler.step(args.start_epoch)
     if args.eval:
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model, device, ext_logger=ext_logger)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")        
         
         if args.output_dir and utils.is_main_process():
@@ -430,7 +463,7 @@ def main(args):
             optimizer, device, epoch, loss_scaler,
             args.clip_grad, model_ema, mixup_fn,
             set_training_mode=args.train_mode,  # keep in eval mode for deit finetuning / train mode for training and deit III finetuning
-            args = args,
+            args = args, ext_logger=ext_logger,
         )
 
         lr_scheduler.step(epoch)
@@ -448,7 +481,7 @@ def main(args):
                 }, checkpoint_path)
              
 
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model, device, epoch=epoch, ext_logger=ext_logger)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         
         if max_accuracy < test_stats["acc1"]:
