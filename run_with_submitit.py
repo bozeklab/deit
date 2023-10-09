@@ -29,8 +29,8 @@ def parse_args():
 def get_shared_folder() -> Path:
     user = os.getenv("USER")
     path = Path(f'/net/tscratch/people/{user}/logs')
-    p.mkdir(exist_ok=True)
-    return p
+    path.mkdir(exist_ok=True)
+    return path
 
 def get_init_file():
     # Init file must not exist, but it's parent dir must exist.
@@ -102,7 +102,7 @@ def main():
         # Below are cluster dependent parameters
         slurm_partition=partition,
         slurm_signal_delay_s=120,
-        slurm_additional_parameters={'account': f'{os.getenv("USER")}-gpu-a100', 'constraint': 'memfs'},
+        slurm_additional_parameters={'account': 'plgiris-gpu-a100', 'constraint': 'memfs'},
         slurm_setup=['source $SCRATCH/conda/etc/profile.d/conda.sh', 'conda activate compvit'],
         **kwargs
     )
