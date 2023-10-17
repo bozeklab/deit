@@ -134,15 +134,15 @@ def extract(data_loader, model, device, KMs, seq: bool=False, group_by_class: bo
                     ret[name] = np.concatenate([ret[name], feat], axis=0)
     return ret
 
-def eval_km(data_loader, model, device, group_by_class):
+def evaluate_km(data_loader, model, device, group_by_class):
     KMs = [[k, m] for m in model.division_masks.keys() for k in range(len(model.blocks))]
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class)
 
-def eval_01_816(data_loader, model, device, group_by_class):
+def evaluate_01_816(data_loader, model, device, group_by_class):
     KMs = [[0,1], [8,16]]
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class)
 
-def eval_seq(data_loader, model, device, group_by_class):
+def evaluate_seq(data_loader, model, device, group_by_class):
     KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks))]
     return evaluate(data_loader, model, device, KMs=KMs, seq=True, group_by_class=group_by_class)
 
@@ -201,10 +201,11 @@ def main(args):
     for task_name in args.evaluate:
         task = globals()[task_name]
         test_stats = task(data_loader_val, model, args.device, args.group_by_class)
-        with open(os.path.join(output_dir, task_name, ".txt"), "a") as f:
+        with open(os.path.join(output_dir, task_name + ".txt"), "a") as f:
             f.write(json.dumps(test_stats) + "\n")
     
     for task_name in args.extract:
+        assert not args.distributed
         task = globals()[task_name]
         test_stats = task(data_loader_val, model, args.device, args.group_by_class)
         np.savez_compressed(os.path.join(output_dir, task_name), **test_stats)
