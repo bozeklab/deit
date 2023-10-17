@@ -239,8 +239,16 @@ def main(args):
         args.data_path = prepare_imagenet(args.data_path)
 
 
-    dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
-    dataset_val, _ = build_dataset(is_train=False, args=args)
+    try:
+        dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
+    except:
+        print("Couldnt load train dataset.")
+        dataset_train = None
+
+    dataset_val, args.nb_classes = build_dataset(is_train=False, args=args)
+    if dataset_train is None:
+        assert args.eval
+        dataset_train = dataset_val
 
     if args.distributed:
         num_tasks = utils.get_world_size()

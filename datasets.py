@@ -53,16 +53,29 @@ class INatDataset(ImageFolder):
     # __getitem__ and __len__ inherited from ImageFolder
 
 
+from typing import List, Dict, Tuple
+class PatchedImageFolder(ImageFolder):
+    def find_classes(self, directory: str) -> Tuple[List[str], Dict[str, int]]:
+        classes = sorted(entry.name for entry in os.scandir(directory) if entry.is_dir())
+        if not classes:
+            raise FileNotFoundError(f"Couldn't find any class folder in {directory}.")  
+        class_to_idx = {cls_name: int(cls_name) for i, cls_name in enumerate(classes)}
+        return classes, class_to_idx
+
 def build_dataset(is_train, args):
     transform = build_transform(is_train, args)
 
     if args.data_set == 'CIFAR':
         dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform)
         nb_classes = 100
+    elif args.data_set == 'IMNET2':
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = PatchedImageFolder(root, transform=transform)
+        nb_classes = len(dataset.classes)
     elif args.data_set == 'IMNET':
         root = os.path.join(args.data_path, 'train' if is_train else 'val')
-        dataset = datasets.ImageFolder(root, transform=transform)
-        nb_classes = 1000
+        dataset = ImageFolder(root, transform=transform)
+        nb_classes = len(dataset.classes)
     elif args.data_set == 'INAT':
         dataset = INatDataset(args.data_path, train=is_train, year=2018,
                               category=args.inat_category, transform=transform)

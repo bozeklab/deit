@@ -89,7 +89,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
 @torch.no_grad()
 def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None, KMs = [[0,1], [8,16], [4,16]], seq: bool = False):
-    assert [0, 1] in KMs
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
 
@@ -118,8 +117,8 @@ def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callab
             name = 'acc1'
             if [k, m] != [0, 1]:
                 name += f"_K{k}_M{m}"
-            if seq:
-                name += f"_i{i}"
+                if seq:
+                    name += f"_i{i}"
             metric_logger.meters[name].update(acc.item(), n=batch_size)
         
     # gather the stats from all processes

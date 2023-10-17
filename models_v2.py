@@ -316,7 +316,7 @@ class vit_models(nn.Module):
             
             x = self.norm(x)
             ret.append(x[:, 0])
-        return ret
+        return torch.stack(ret)
 
     def comp_forward_afterK(self, x, K, M):
         B = x.shape[0]
@@ -361,8 +361,12 @@ class vit_models(nn.Module):
         if len(sample) == 3:
             x, K, M = sample
             seq = False
+            feat_only = False
         elif len(sample) == 4:
             x, K, M, seq = sample
+            feat_only = False
+        elif len(sample) == 5:
+            x, K, M, seq, feat_only = sample
         else:
             raise NotImplementedError()
         
@@ -371,6 +375,9 @@ class vit_models(nn.Module):
         else:
             x = self.comp_forward_afterK(x, K, M)
         
+        if feat_only:
+            return x
+
         if self.dropout_rate:
             x = F.dropout(x, p=float(self.dropout_rate), training=self.training)
         x = self.head(x)
