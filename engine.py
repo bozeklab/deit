@@ -15,6 +15,7 @@ from timm.utils import accuracy, ModelEma
 
 from losses import DistillationLoss
 import utils
+from mask_const import sample_masks, get_division_masks_for_model
 
 
 def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
@@ -22,7 +23,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
                     model_ema: Optional[ModelEma] = None, mixup_fn: Optional[Mixup] = None,
                     set_training_mode=True, args = None, ext_logger: Optional[Callable[[Dict, int], None]] = None,
-                    sample_KM = False):
+                    sample_divisions = False):
     model.train(set_training_mode)
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
@@ -47,10 +48,13 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
          
         with torch.cuda.amp.autocast():
             K, M = 0, 1
-            if sample_KM:
+            if sample_divisions:
+                division_masks = get_division_masks_for_model(model)
                 K = random.randint(0, len(model.blocks))
-                M = random.choice(list(model.division_masks.keys()))
-            outputs = model(samples, K=K, M=M)
+                M = random.choice(list(division_masks.keys()))
+                masks = sample_masks(division_masks, M)
+            
+            outputs = model(samples, K=K, masks=masks if M != 1 else None)
             if not args.cosub:
                 loss = criterion(samples, outputs, targets)
             else:
@@ -97,6 +101,8 @@ def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callab
     KMs = [[0,1], [4,16], [8,16]]
     # switch to evaluation mode
     model.eval()
+    division_masks = get_division_masks_for_model(model)
+
 
     for images, target in metric_logger.log_every(data_loader, 10, header):
         images = images.to(device, non_blocking=True)
@@ -105,7 +111,7 @@ def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callab
         # compute output
         with torch.cuda.amp.autocast():
             outputs = [
-                [[k, m], model(images, K=k, M=m)]
+                [[k, m], model(images, K=k, masks=sample_masks(division_masks, m))]
                 for k, m in KMs
             ]
         

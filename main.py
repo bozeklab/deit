@@ -197,8 +197,8 @@ def get_args_parser():
     parser.add_argument('--wandb_model_name', default=None, type=str,   
                         help='log to weights and biases dashboard')
 
-    parser.add_argument('--sample_KM', action="store_true",
-                        help='sample K and M during training.')
+    parser.add_argument('--sample_divisions', action="store_true",
+                        help='sample vit and input divisions during training.')
 
 
 
@@ -475,7 +475,7 @@ def main(args):
             args.clip_grad, model_ema, mixup_fn,
             set_training_mode=args.train_mode,  # keep in eval mode for deit finetuning / train mode for training and deit III finetuning
             args = args, ext_logger=ext_logger,
-            sample_KM=args.sample_KM,
+            sample_divisions=args.sample_divisions,
         )
 
         lr_scheduler.step(epoch)

@@ -11,6 +11,7 @@ from timm.utils import accuracy
 import numpy as np
 import models
 import models_v2
+from mask_const import sample_masks, get_division_masks_for_model
 
 def get_args_parser():
     parser = argparse.ArgumentParser('DeiT training and evaluation script', add_help=False)
@@ -58,6 +59,7 @@ def evaluate(data_loader, model, device, KMs, seq: bool=False, group_by_class: b
     
     # switch to evaluation mode
     model.eval()
+    division_masks = get_division_masks_for_model(model)
 
     for images, target in metric_logger.log_every(data_loader, 10, header):
         images = images.to(device, non_blocking=True)
@@ -72,7 +74,7 @@ def evaluate(data_loader, model, device, KMs, seq: bool=False, group_by_class: b
             # compute output
             with torch.cuda.amp.autocast():
                 outputs = [
-                    [[k, m], model((images, k, m, seq))]
+                    [[k, m], model(images, K=k, masks=sample_masks(division_masks, m))]
                     for k, m in KMs
                 ]
             accuracies = [
@@ -104,6 +106,7 @@ def evaluate(data_loader, model, device, KMs, seq: bool=False, group_by_class: b
 def extract(data_loader, model, device, KMs, seq: bool=False, group_by_class: bool=False):
     # switch to evaluation mode
     model.eval()
+    division_masks = get_division_masks_for_model(model)
     ret = {}
     for images, target in tqdm(data_loader, "extracting features "):
         images = images.to(device, non_blocking=True)
@@ -118,7 +121,7 @@ def extract(data_loader, model, device, KMs, seq: bool=False, group_by_class: bo
             # compute output
             with torch.cuda.amp.autocast():
                 outputs = [
-                    [[k, m], model((images, k, m, seq, True)).cpu().numpy()]
+                    [[k, m], model(images, K=k, masks=sample_masks(division_masks, m), seq=seq, cls_only=True).cpu().numpy()]
                     for k, m in KMs
                 ]
             for [[k, m], feat] in outputs:

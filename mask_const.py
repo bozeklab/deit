@@ -1,25 +1,49 @@
 import numpy as np
-import random
-import torch
 
 def _generate_masks(xs, ys):
     masks = []
-    zeros = np.zeros([sum(xs),sum(ys)], dtype=bool)
+    W, H = sum(xs), sum(ys)
     y_offset = 0
     for y in ys:
         x_offset = 0
         for x in xs:
-            mask = zeros.copy()
+            mask = np.zeros([H, W], dtype=bool)
             mask[y_offset:y_offset+y, x_offset:x_offset+x] = 1
             masks.append(mask)
             x_offset += x
         y_offset += y
     return masks
 
+def _generate_ids(xs, ys):
+    ids = []
+    W = sum(xs)
+    y_offset = 0
+    for y in ys:
+        x_offset = 0
+        for x in xs:
+            id = [x_+y_*W for y_ in range(y_offset, y_offset+y) for x_ in range(x_offset, x_offset+x)]
+            ids.append(id)
+            x_offset += x
+        y_offset += y
+    return ids
+
+
 def division_masks_from_spec(specs):
-    wides = {k: _generate_masks(**v) for k, v in specs.items()}
-    ret = {k: [masks, [np.rot90(m).copy() for m in masks]] for k, masks in wides.items()}
+    ret = {}
+    for k, v in specs.items():
+        ret[k] = [_generate_masks(**v)]
+        v_rot = {"xs": v["ys"], "ys": v["xs"]}
+        ret[k].append(_generate_masks(**v_rot))
     return ret
+
+def division_ids_from_spec(specs):
+    ret = {}
+    for k, v in specs.items():
+        ret[k] = [_generate_ids(**v)]
+        v_rot = {"xs": v["ys"], "ys": v["xs"]}
+        ret[k].append(_generate_ids(**v_rot))
+    return ret
+
 
 DIVISION_SPECS_14_14 = {
     1: {"xs": [14], "ys": [14]},
@@ -49,3 +73,20 @@ DIVISION_MASKS = {
     12: division_masks_from_spec(DIVISION_SPECS_12_12),
     14: division_masks_from_spec(DIVISION_SPECS_14_14)
 }
+
+DIVISION_IDS = {
+    12: division_ids_from_spec(DIVISION_SPECS_12_12),
+    14: division_ids_from_spec(DIVISION_SPECS_14_14)
+}
+
+import random
+def sample_masks(division_masks, M):
+    m_id = random.randint(0, len(division_masks[M]) - 1)
+    masks = division_masks[M][m_id]
+    return masks
+
+def get_division_masks_for_model(model):
+    assert model.patch_embed.img_size[0] == model.patch_embed.img_size[1]
+    assert model.patch_embed.patch_size[0] == model.patch_embed.patch_size[1]
+    division_masks = DIVISION_MASKS[model.patch_embed.img_size[0] // model.patch_embed.patch_size[0]]
+    return division_masks
