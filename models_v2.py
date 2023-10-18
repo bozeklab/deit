@@ -352,30 +352,16 @@ class vit_models(nn.Module):
         for blk in self.blocks[K:]:
             x = blk(x)
 
-
-
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, sample):
-        if len(sample) == 3:
-            x, K, M = sample
-            seq = False
-            feat_only = False
-        elif len(sample) == 4:
-            x, K, M, seq = sample
-            feat_only = False
-        elif len(sample) == 5:
-            x, K, M, seq, feat_only = sample
-        else:
-            raise NotImplementedError()
-        
+    def forward(self, x, K=0, M=1, seq=False, cls_only=False):
         if seq:
             x = self.comp_seq(x, K, M)
         else:
             x = self.comp_forward_afterK(x, K, M)
         
-        if feat_only:
+        if cls_only:
             return x
 
         if self.dropout_rate:

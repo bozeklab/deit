@@ -158,7 +158,7 @@ def get_args_parser():
     # Dataset parameters
     parser.add_argument('--data-path', default='/datasets01/imagenet_full_size/061417/', type=str,
                         help='dataset path')
-    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19'],
+    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR100', 'CIFAR10', 'IMNET', 'INAT', 'INAT19'],
                         type=str, help='Image Net dataset path')
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
@@ -196,6 +196,10 @@ def get_args_parser():
                         help='log to weights and biases dashboard') 
     parser.add_argument('--wandb_model_name', default=None, type=str,   
                         help='log to weights and biases dashboard')
+
+    parser.add_argument('--sample_KM', action="store_true",
+                        help='sample K and M during training.')
+
 
 
     return parser
@@ -471,6 +475,7 @@ def main(args):
             args.clip_grad, model_ema, mixup_fn,
             set_training_mode=args.train_mode,  # keep in eval mode for deit finetuning / train mode for training and deit III finetuning
             args = args, ext_logger=ext_logger,
+            sample_KM=args.sample_KM,
         )
 
         lr_scheduler.step(epoch)

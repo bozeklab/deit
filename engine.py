@@ -21,7 +21,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
                     model_ema: Optional[ModelEma] = None, mixup_fn: Optional[Mixup] = None,
-                    set_training_mode=True, args = None, ext_logger: Optional[Callable[[Dict, int], None]] = None):
+                    set_training_mode=True, args = None, ext_logger: Optional[Callable[[Dict, int], None]] = None,
+                    sample_KM = False):
     model.train(set_training_mode)
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
@@ -45,9 +46,11 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
             targets = targets.gt(0.0).type(targets.dtype)
          
         with torch.cuda.amp.autocast():
-            K = random.randint(0, 12)
-            M = random.choice([2, 3, 4, 6, 8, 9, 12, 16])
-            outputs = model((samples, K, M))
+            K, M = 0, 1
+            if sample_KM:
+                K = random.randint(0, len(model.blocks))
+                M = random.choice(list(model.division_masks.keys()))
+            outputs = model(samples, K=K, M=M)
             if not args.cosub:
                 loss = criterion(samples, outputs, targets)
             else:
@@ -88,10 +91,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None, KMs = [[0,1], [8,16], [4,16]], seq: bool = False):
+def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None):
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
-
+    KMs = [[0,1], [4,16], [8,16]]
     # switch to evaluation mode
     model.eval()
 
@@ -102,23 +105,20 @@ def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callab
         # compute output
         with torch.cuda.amp.autocast():
             outputs = [
-                [[k, m], model((images, k, m, seq))]
+                [[k, m], model(images, K=k, M=m)]
                 for k, m in KMs
             ]
         
         accuracies = [
-            [[k, m, i], accuracy(out, target)[0]]
+            [[k, m], accuracy(outs, target)[0]]
             for [[k, m], outs] in outputs
-            for i, out in (enumerate(outs) if seq else [[0, outs]])
         ]
 
         batch_size = images.shape[0]
-        for [[k, m, i], acc] in accuracies:
+        for [[k, m], acc] in accuracies:
             name = 'acc1'
             if [k, m] != [0, 1]:
                 name += f"_K{k}_M{m}"
-                if seq:
-                    name += f"_i{i}"
             metric_logger.meters[name].update(acc.item(), n=batch_size)
         
     # gather the stats from all processes
