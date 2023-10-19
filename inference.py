@@ -11,7 +11,10 @@ from timm.utils import accuracy
 import numpy as np
 import models
 import models_v2
-from mask_const import sample_masks, get_division_masks_for_model
+from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS
+from functools import partial
+from fvcore.nn import FlopCountAnalysis
+import pandas as pd
 
 def get_args_parser():
     parser = argparse.ArgumentParser('DeiT training and evaluation script', add_help=False)
@@ -32,7 +35,7 @@ def get_args_parser():
 
     parser.add_argument('--output_dir', type=str, required=True,
                         help='path where to save')
-    parser.add_argument('--checkpoint', required=True, help="path to model checkpoint")
+    parser.add_argument('--checkpoint', default=None, help="path to model checkpoint")
     parser.add_argument('--device', default="cuda", type=str)
     
     parser.add_argument('--num_workers', default=10, type=int)
@@ -45,6 +48,7 @@ def get_args_parser():
 
     parser.add_argument('--evaluate', nargs='*', default=[])
     parser.add_argument('--extract', nargs='*', default=[])
+    parser.add_argument('--count_flops', action="store_true")
     
     parser.add_argument('--group_by_class', action="store_true")
     
@@ -137,31 +141,63 @@ def extract(data_loader, model, device, KMs, seq: bool=False, group_by_class: bo
                     ret[name] = np.concatenate([ret[name], feat], axis=0)
     return ret
 
-def evaluate_km(data_loader, model, device, group_by_class):
+def evaluate_km(data_loader, model, device, group_by_class, *args, **kwargs):
     KMs = [[k, m] for m in model.division_masks.keys() for k in range(len(model.blocks))]
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class)
 
-def evaluate_01_816(data_loader, model, device, group_by_class):
+def evaluate_01_816(data_loader, model, device, group_by_class, *args, **kwargs):
     KMs = [[0,1], [8,16]]
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class)
 
-def evaluate_seq(data_loader, model, device, group_by_class):
+def evaluate_seq(data_loader, model, device, group_by_class, *args, **kwargs):
     KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks))]
     return evaluate(data_loader, model, device, KMs=KMs, seq=True, group_by_class=group_by_class)
 
-def extract_k(data_loader, model, device, group_by_class):
+def count_flops(create_model_fn, img_size):
+    IMG = torch.zeros(1,3,img_size,img_size)
+    division_masks = DIVISION_MASKS[14][16][0]
+    division_ids = DIVISION_IDS[14][16][0]
+    imgs = []
+    for divm in division_masks:
+        divm = np.expand_dims(divm, [0,1]).repeat(3, axis=1).repeat(16, axis=2).repeat(16, axis=3)
+        H, W = divm.sum(axis=2).max(), divm.sum(axis=3).max()
+        imgs.append(IMG[divm].reshape(1,3,H, W))
+
+    with torch.no_grad():
+        flops = {}
+        for k in tqdm(range(len(create_model_fn().blocks)), f"K: "):
+            flops[k] = []
+            model = create_model_fn()
+            model.comp_next_init()
+            cache = model._comp_next_cache
+            for i, [img, id] in enumerate(zip(imgs, division_ids)):
+                model = create_model_fn()
+                model.forward = partial(model.comp_next, K=k, ids=id)
+                model.eval()
+                model._comp_next_cache = cache
+                flops[k].append(FlopCountAnalysis(model, img).total())
+                cache = model._comp_next_cache
+                assert len(cache["xs_feats"]) == i+1, len(cache["xs_feats"])
+                assert cache["i"] == i+1, cache["i"]
+    return flops
+
+
+def extract_k(data_loader, model, device, group_by_class, *args, **kwargs):
     KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks))]
     return extract(data_loader, model, device, KMs=KMs, seq=False, group_by_class=group_by_class)
 
-def extract_01(data_loader, model, device, group_by_class):
+def extract_01(data_loader, model, device, group_by_class, *args, **kwargs):
     KMs = [[0,1]]
     return extract(data_loader, model, device, KMs=KMs, seq=False, group_by_class=group_by_class)
 
 
+
 def main(args):
+    output_dir = Path(args.output_dir)
+    with open(os.path.join(output_dir, "args.json"), "w") as f:
+        json.dump(args.__dict__, f, indent=2)
 
     utils.init_distributed_mode(args)
-    output_dir = Path(args.output_dir)
     dataset_val, nb_classes = build_dataset(is_train=False, args=args)
     with open(os.path.join(output_dir, "class_to_idx.json"), "a") as f:
         f.write(json.dumps(dataset_val.class_to_idx))
@@ -198,23 +234,39 @@ def main(args):
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
     
-    checkpoint = torch.load(args.checkpoint, map_location='cpu')
-    model_without_ddp.load_state_dict(checkpoint['model'])
+    if args.checkpoint is not None:
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')
+        model_without_ddp.load_state_dict(checkpoint['model'])
 
-    for task_name in args.evaluate:
-        task = globals()[task_name]
-        test_stats = task(data_loader_val, model, args.device, args.group_by_class)
-        with open(os.path.join(output_dir, task_name + ".txt"), "a") as f:
-            f.write(json.dumps(test_stats) + "\n")
+        for task_name in args.evaluate:
+            task = globals()[task_name]
+            test_stats = task(data_loader_val, model, args.device, args.group_by_class)
+            with open(os.path.join(output_dir, task_name + ".txt"), "w") as f:
+                f.write(json.dumps(test_stats))
+
+        for task_name in args.extract:
+            assert not args.distributed
+            task = globals()[task_name]
+            test_stats = task(data_loader_val, model, args.device, args.group_by_class)
+            np.savez_compressed(os.path.join(output_dir, task_name), **test_stats)
+    else:
+        print("[WARNING] --checkpoint is None")
     
-    for task_name in args.extract:
-        assert not args.distributed
-        task = globals()[task_name]
-        test_stats = task(data_loader_val, model, args.device, args.group_by_class)
-        np.savez_compressed(os.path.join(output_dir, task_name), **test_stats)
+    if args.count_flops:
+        create_model_fn = partial(create_model,
+            args.model,
+            pretrained=False,
+            num_classes=nb_classes,
+            img_size=args.input_size
+        )
+        flops = count_flops(create_model_fn, args.input_size)
+        flat_flops = [(str(k),i, v/1000000000) for k, l in flops.items() for i, v in enumerate(l)]
+        df = pd.DataFrame(flat_flops, columns=["K", "ith_inference", "GFLOPs"])
+        pd.DataFrame.to_csv(df, os.path.join(output_dir, "count_flops.csv"))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
-    Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    Path(args.output_dir).mkdir(parents=True, exist_ok=args.output_dir == "debug")
     main(args)
