@@ -261,7 +261,7 @@ def main(args):
         )
         flops = count_flops(create_model_fn, args.input_size)
         flat_flops = [(str(k),i, v/1000000000) for k, l in flops.items() for i, v in enumerate(l)]
-        df = pd.DataFrame(flat_flops, columns=["K", "ith_inference", "GFLOPs"])
+        df = pd.DataFrame(flat_flops, columns=["K", "i", "GFLOPs"])
         pd.DataFrame.to_csv(df, os.path.join(output_dir, "count_flops.csv"))
 
 
