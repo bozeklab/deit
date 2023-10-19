@@ -51,13 +51,15 @@ def get_args_parser():
     parser.add_argument('--count_flops', action="store_true")
     
     parser.add_argument('--group_by_class', action="store_true")
+    parser.add_argument('--random_masks', action="store_true")
     
     return parser
 
 
+# -------------------- GENERIC ---------------------
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, KMs, seq: bool=False, group_by_class: bool=False):
+def evaluate(data_loader, model, device, KMs, random_masks, seq: bool=False, group_by_class: bool=False):
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
     
@@ -78,7 +80,7 @@ def evaluate(data_loader, model, device, KMs, seq: bool=False, group_by_class: b
             # compute output
             with torch.cuda.amp.autocast():
                 outputs = [
-                    [[k, m], model(images, K=k, masks=sample_masks(division_masks, m))]
+                    [[k, m], model(images, K=k, masks=sample_masks(division_masks, m) if random_masks else division_masks[m][0])]
                     for k, m in KMs
                 ]
             accuracies = [
@@ -107,51 +109,66 @@ def evaluate(data_loader, model, device, KMs, seq: bool=False, group_by_class: b
 
 
 @torch.no_grad()
-def extract(data_loader, model, device, KMs, seq: bool=False, group_by_class: bool=False):
+def extract(data_loader, model, device, KMs, random_masks, seq: bool=False):
     # switch to evaluation mode
     model.eval()
     division_masks = get_division_masks_for_model(model)
-    ret = {}
-    for images, target in tqdm(data_loader, "extracting features "):
+    
+    ret = {
+        f"{k}_{m}": {"features" : [], "targets": []}
+        for k, m in KMs
+    }
+
+    for images, targets in tqdm(data_loader, "extracting features "):
         images = images.to(device, non_blocking=True)
-        target = target.to(device, non_blocking=True)
-        if group_by_class:
-            classes = set(target.cpu().numpy())
-            grouped = {c: [images[target == c].clone(), torch.full(((target == c).sum().item(),), c, device=target.device)] for c in classes}
-        else:
-            classes = [0]
-            grouped = {0: [images, target]}
-        for c, [images, target] in grouped.items():
-            # compute output
-            with torch.cuda.amp.autocast():
-                outputs = [
-                    [[k, m], model(images, K=k, masks=sample_masks(division_masks, m), seq=seq, cls_only=True).cpu().numpy()]
-                    for k, m in KMs
-                ]
-            for [[k, m], feat] in outputs:
-                name = ''
-                if group_by_class:
-                    name += f'cls{c}_'
-                name += 'feat'
-                if [k, m] != [0, 1]:
-                    name += f"_K{k}_M{m}"
-                if name not in ret:
-                    ret[name] = feat
+        targets = targets.cpu().numpy()
+        with torch.cuda.amp.autocast():
+            for k, m in KMs:
+                if random_masks:
+                    masks = sample_masks(division_masks, m)
                 else:
-                    ret[name] = np.concatenate([ret[name], feat], axis=0)
+                    masks = division_masks[m][0]
+                features = model(images, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
+                ret[f"{k}_{m}"]["features"].append(features)
+                ret[f"{k}_{m}"]["targets"].append(targets)
+        break
+
+    for k, m in KMs:
+        ret[f"{k}_{m}"]["features"] = np.concatenate(ret[f"{k}_{m}"]["features"])
+        ret[f"{k}_{m}"]["targets"] = np.concatenate(ret[f"{k}_{m}"]["targets"])
     return ret
 
-def evaluate_km(data_loader, model, device, group_by_class, *args, **kwargs):
-    KMs = [[k, m] for m in model.division_masks.keys() for k in range(len(model.blocks)+1)]
-    return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class)
+def np_dict_to_dir_tree(root, dic):
+    if set(dic.keys()) == set(["features", "targets"]):
+        np.savez_compressed(root, **dic)
+        return
+    os.makedirs(root, exist_ok=True)
+    for k in dic:
+        np_dict_to_dir_tree(os.path.join(root, str(k)), dic[k])
 
-def evaluate_01_816(data_loader, model, device, group_by_class, *args, **kwargs):
+# -------------------- SPECIALIZED ---------------------
+
+def evaluate_km(data_loader, model, device, group_by_class, random_masks, *args, **kwargs):
+    KMs = [[k, m] for m in get_division_masks_for_model(model).keys() for k in range(len(model.blocks)+1)]
+    return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class, random_masks=random_masks)
+
+def evaluate_01_816(data_loader, model, device, group_by_class, random_masks, *args, **kwargs):
     KMs = [[0,1], [8,16]]
-    return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class)
+    return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class, random_masks=random_masks)
 
-def evaluate_seq(data_loader, model, device, group_by_class, *args, **kwargs):
-    KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks)+1)]
-    return evaluate(data_loader, model, device, KMs=KMs, seq=True, group_by_class=group_by_class)
+def evaluate_k16_seq(data_loader, model, device, group_by_class, random_masks, *args, **kwargs):
+    KMs = [[k, 16] for k in range(len(model.blocks)+1)]
+    return evaluate(data_loader, model, device, KMs=KMs, seq=True, group_by_class=group_by_class, random_masks=random_masks)
+
+def extract_k16(data_loader, model, device, random_masks, *args, **kwargs):
+    KMs = [[k, 16] for k in range(len(model.blocks)+1)]
+    return extract(data_loader, model, device, KMs=KMs, random_masks=random_masks)
+
+def extract_01(data_loader, model, device, random_masks, *args, **kwargs):
+    return extract(data_loader, model, device, KMs=[[0,1]], random_masks=random_masks)
+
+
+# -------------------- FLOPS ---------------------
 
 def count_flops(create_model_fn, img_size):
     IMG = torch.zeros(1,3,img_size,img_size)
@@ -182,17 +199,15 @@ def count_flops(create_model_fn, img_size):
     return flops
 
 
-def extract_k(data_loader, model, device, group_by_class, *args, **kwargs):
-    KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks)+1)]
-    return extract(data_loader, model, device, KMs=KMs, seq=False, group_by_class=group_by_class)
 
-def extract_01(data_loader, model, device, group_by_class, *args, **kwargs):
-    KMs = [[0,1]]
-    return extract(data_loader, model, device, KMs=KMs, seq=False, group_by_class=group_by_class)
+
 
 
 
 def main(args):
+    if args.checkpoint is None:
+        print("[WARNING] --checkpoint is None")
+
     output_dir = Path(args.output_dir)
     with open(os.path.join(output_dir, "args.json"), "w") as f:
         json.dump(args.__dict__, f, indent=2)
@@ -215,7 +230,7 @@ def main(args):
     
     data_loader_val = torch.utils.data.DataLoader(
         dataset_val, sampler=sampler_val,
-        batch_size=int(1.5 * args.batch_size),
+        batch_size=args.batch_size,
         num_workers=args.num_workers,
         pin_memory=args.pin_mem,
         drop_last=False
@@ -240,17 +255,25 @@ def main(args):
 
         for task_name in args.evaluate:
             task = globals()[task_name]
-            test_stats = task(data_loader_val, model, args.device, args.group_by_class)
+            test_stats = task(
+                data_loader=data_loader_val,
+                model=model,
+                device=args.device,
+                group_by_class=args.group_by_class,
+                random_masks=args.random_masks)
             with open(os.path.join(output_dir, task_name + ".txt"), "w") as f:
                 f.write(json.dumps(test_stats))
 
         for task_name in args.extract:
             assert not args.distributed
             task = globals()[task_name]
-            test_stats = task(data_loader_val, model, args.device, args.group_by_class)
-            np.savez_compressed(os.path.join(output_dir, task_name), **test_stats)
-    else:
-        print("[WARNING] --checkpoint is None")
+            test_stats = task(
+                data_loader=data_loader_val,
+                model=model,
+                device=args.device,
+                group_by_class=args.group_by_class,
+                random_masks=args.random_masks)
+            np_dict_to_dir_tree(os.path.join(output_dir, task_name), test_stats)
     
     if args.count_flops:
         create_model_fn = partial(create_model,
