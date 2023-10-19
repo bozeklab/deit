@@ -142,7 +142,7 @@ def extract(data_loader, model, device, KMs, seq: bool=False, group_by_class: bo
     return ret
 
 def evaluate_km(data_loader, model, device, group_by_class, *args, **kwargs):
-    KMs = [[k, m] for m in model.division_masks.keys() for k in range(len(model.blocks))]
+    KMs = [[k, m] for m in model.division_masks.keys() for k in range(len(model.blocks)+1)]
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class)
 
 def evaluate_01_816(data_loader, model, device, group_by_class, *args, **kwargs):
@@ -150,7 +150,7 @@ def evaluate_01_816(data_loader, model, device, group_by_class, *args, **kwargs)
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class)
 
 def evaluate_seq(data_loader, model, device, group_by_class, *args, **kwargs):
-    KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks))]
+    KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks)+1)]
     return evaluate(data_loader, model, device, KMs=KMs, seq=True, group_by_class=group_by_class)
 
 def count_flops(create_model_fn, img_size):
@@ -183,7 +183,7 @@ def count_flops(create_model_fn, img_size):
 
 
 def extract_k(data_loader, model, device, group_by_class, *args, **kwargs):
-    KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks))]
+    KMs = [[k, max(model.division_masks.keys())] for k in range(len(model.blocks)+1)]
     return extract(data_loader, model, device, KMs=KMs, seq=False, group_by_class=group_by_class)
 
 def extract_01(data_loader, model, device, group_by_class, *args, **kwargs):
