@@ -5,7 +5,6 @@ import os
 from timm.models import create_model
 from pathlib import Path
 from tqdm import tqdm
-from datasets import build_dataset
 import utils
 from timm.utils import accuracy
 import numpy as np
@@ -29,6 +28,8 @@ def get_args_parser():
                         help='dataset path')
     parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19'],
                         type=str, help='Image Net dataset path')
+    parser.add_argument('--data-split', default='val', choices=['train', 'val'],
+                        type=str)
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
                         type=str, help='semantic granularity')
@@ -131,7 +132,6 @@ def extract(data_loader, model, device, KMs, random_masks, seq: bool=False):
                 features = model(images, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
                 ret[f"{k}_{m}"]["features"].append(features)
                 ret[f"{k}_{m}"]["targets"].append(targets)
-        break
 
     for k, m in KMs:
         ret[f"{k}_{m}"]["features"] = np.concatenate(ret[f"{k}_{m}"]["features"])
@@ -199,8 +199,45 @@ def count_flops(create_model_fn, img_size):
     return flops
 
 
+from datasets import transforms, datasets, ImageFolder, PatchedImageFolder, INatDataset, IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+def default_transform_dataset(is_train, args):
+    resize_im = args.input_size > 32
+    t = []
+    if resize_im:
+        size = int(args.input_size / args.eval_crop_ratio)
+        t.append(
+            transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
+        )
+        t.append(transforms.CenterCrop(args.input_size))
 
+    t.append(transforms.ToTensor())
+    t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
+    transform = transforms.Compose(t)
 
+    if args.data_set == 'CIFAR100':
+        dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform)
+        nb_classes = 100
+    if args.data_set == 'CIFAR10':
+        dataset = datasets.CIFAR10(args.data_path, train=is_train, transform=transform)
+        nb_classes = 10
+    elif args.data_set == 'IMNET2':
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = PatchedImageFolder(root, transform=transform)
+        nb_classes = len(dataset.classes)
+    elif args.data_set == 'IMNET':
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = ImageFolder(root, transform=transform)
+        nb_classes = len(dataset.classes)
+    elif args.data_set == 'INAT':
+        dataset = INatDataset(args.data_path, train=is_train, year=2018,
+                              category=args.inat_category, transform=transform)
+        nb_classes = dataset.nb_classes
+    elif args.data_set == 'INAT19':
+        dataset = INatDataset(args.data_path, train=is_train, year=2019,
+                              category=args.inat_category, transform=transform)
+        nb_classes = dataset.nb_classes
+
+    return dataset, nb_classes
 
 
 
@@ -213,7 +250,7 @@ def main(args):
         json.dump(args.__dict__, f, indent=2)
 
     utils.init_distributed_mode(args)
-    dataset_val, nb_classes = build_dataset(is_train=False, args=args)
+    dataset_val, nb_classes = default_transform_dataset(is_train=args.data_split == "train", args=args)
     with open(os.path.join(output_dir, "class_to_idx.json"), "a") as f:
         f.write(json.dumps(dataset_val.class_to_idx))
     if args.distributed:
