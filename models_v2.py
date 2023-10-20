@@ -3,12 +3,18 @@
 
 import torch
 import torch.nn as nn
+import random
 from functools import partial
 
-from timm.models.vision_transformer import Mlp, PatchEmbed , _cfg
+from timm.models.vision_transformer import Mlp, VisionTransformer, _cfg, PatchEmbed, Block
+from timm.models.vision_transformer_hybrid import HybridEmbed
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
+import torch.nn.functional as F
+
+from mask_const import DIVISION_MASKS
+
 
 class Attention(nn.Module):
     # taken from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
@@ -190,7 +196,7 @@ class vit_models(nn.Module):
         self.num_features = self.embed_dim = embed_dim
 
         self.patch_embed = Patch_layer(
-                img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
+                img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim, strict_img_size=False)
         num_patches = self.patch_embed.num_patches
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
@@ -245,21 +251,159 @@ class vit_models(nn.Module):
         x = self.patch_embed(x)
 
         cls_tokens = self.cls_token.expand(B, -1, -1)
-        
+
         x = x + self.pos_embed
-        
+
         x = torch.cat((cls_tokens, x), dim=1)
+
+        for i, blk in enumerate(self.blocks):
+            x = blk(x)
+
+        x = self.norm(x)
+        return x[:, 0]
+
+    def split_input(self, x, masks, include_cls=True):
+        assert masks is not None
+        masks = [torch.tensor(mask).flatten() for mask in masks]
+        
+        if len(masks[0]) == x.shape[1]:
+            assert not include_cls
+        elif len(masks[0]) == x.shape[1]-1:
+            if include_cls:
+                masks = [torch.cat([torch.ones(1, dtype=bool, device=mask.device), mask], dim=0) for mask in masks]
+            else:
+                masks = [torch.cat([torch.zeros(1, dtype=bool, device=mask.device), mask], dim=0) for mask in masks]
+        else:
+            assert False, f"{len(masks[0])}, {x.shape}"
+    
+        xs = []
+        for mask in masks:
+            xs.append(x[:, mask].reshape(x.shape[0], -1, x.shape[-1]))
             
-        for i , blk in enumerate(self.blocks):
+        return xs
+
+    def prepare_tokens(self, x, ids=None):
+        B = x.shape[0]
+        x = self.patch_embed(x)
+
+        if ids is not None:
+            x = x + self.pos_embed[:, ids]
+        else:
+            x = x + self.pos_embed
+        
+        cls_tokens = self.cls_token.expand(B, -1, -1)
+        x = torch.cat([cls_tokens, x], dim=1)
+        
+        return x
+
+    def comp_next_init(self):
+        self._comp_next_cache = {
+            "cls_mean": torch.zeros_like(self.cls_token),
+            "xs_feats": [],
+            "i": 0,
+        }   
+    
+    def comp_next_deinit(self):
+        del self._comp_next_cache
+    
+    def comp_next(self, x, ids, K):
+        assert hasattr(self, "_comp_next_cache"), "Call 'comp_next_init' before calling 'comp_next'!"
+        x = self.prepare_tokens(x, ids=ids)
+        
+        for blk in self.blocks[:K]:
+            x = blk(x)
+
+        cls_mean = self._comp_next_cache["cls_mean"]
+        i = self._comp_next_cache["i"]
+
+        self._comp_next_cache["cls_mean"] = cls_mean * i/(i+1) + x[:,[0], :] / (i+1)
+        self._comp_next_cache["xs_feats"].append(x[:,1:,:])
+        self._comp_next_cache["i"] += 1
+
+        cls_mean, xs_feats = self._comp_next_cache["cls_mean"], self._comp_next_cache["xs_feats"]
+
+        x = torch.cat([cls_mean] + xs_feats, dim=1)
+            
+        for blk in self.blocks[K:]:
             x = blk(x)
             
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x):
-
-        x = self.forward_features(x)
+    def comp_seq(self, x, K, masks):
+        assert masks is not None
+        x = self.prepare_tokens(x)
         
+        def subencoder(x):
+            for blk in self.blocks[:K]:
+                x = blk(x)
+            return x
+        
+        xs = self.split_input(x, masks)
+        xs = [subencoder(x) for x in xs]
+        random.shuffle(xs)
+
+        cls_mean = torch.zeros_like(xs[0][:,[0],:])
+        xs_feats = []
+        ret = []
+        for i, x in enumerate(xs):
+            cls_mean = cls_mean * i/(i+1) + x[:,[0], :] / (i+1)
+            xs_feats.append(x[:,1:,:])
+            x = torch.cat([cls_mean] + xs_feats, dim=1)
+            
+            for blk in self.blocks[K:]:
+                x = blk(x)
+            
+            x = self.norm(x)
+            ret.append(x[:, 0])
+        return torch.stack(ret)
+
+    def comp_forward_afterK(self, x, K, masks):
+        B = x.shape[0]
+        x = self.prepare_tokens(x)
+
+
+        def subencoder(x):
+            for blk in self.blocks[:K]:
+                x = blk(x)
+            return x
+        
+        if K > 0 and masks is not None:
+            xs = self.split_input(x, masks)
+
+            if all(x.shape[1] == xs[0].shape[1] for x in xs):
+                xs = subencoder(torch.cat(xs, dim=0))
+                xs = xs.reshape(xs.shape[0]//B, B, *xs.shape[1:])
+                
+                xs_cls = xs[:, :, 0, :]
+                xs_feats = xs[:, :, 1:, :]
+                xs_feats = xs_feats.transpose(0,1)
+                xs_feats = xs_feats.flatten(1,2)
+                x = torch.cat([xs_cls.mean(dim=0).unsqueeze(1), xs_feats], dim=1)
+            else:
+                xs = [subencoder(x) for x in xs]
+
+                xs_cls = torch.stack([x[:, [0], :] for x in xs])
+                xs_feats = [x[:, 1:, :] for x in xs]
+                x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
+        else:
+            x = subencoder(x)
+        
+        for blk in self.blocks[K:]:
+            x = blk(x)
+
+        x = self.norm(x)
+        return x[:, 0]
+
+    def forward(self, x, K=0, masks=None, seq=False, cls_only=False):
+        if seq:
+            x = self.comp_seq(x, K, masks)
+        else:
+            x = self.comp_forward_afterK(x, K, masks)
+        
+        if cls_only:
+            return x
+
         if self.dropout_rate:
             x = F.dropout(x, p=float(self.dropout_rate), training=self.training)
         x = self.head(x)

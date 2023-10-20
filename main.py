@@ -28,6 +28,8 @@ import models_v2
 
 import utils
 
+from prepare_imagenet_memfs import prepare_imagenet
+
 
 def get_args_parser():
     parser = argparse.ArgumentParser('DeiT training and evaluation script', add_help=False)
@@ -156,7 +158,7 @@ def get_args_parser():
     # Dataset parameters
     parser.add_argument('--data-path', default='/datasets01/imagenet_full_size/061417/', type=str,
                         help='dataset path')
-    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19'],
+    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR100', 'CIFAR10', 'IMNET', 'INAT', 'INAT19', 'CARS', 'FLOWERS'],
                         type=str, help='Image Net dataset path')
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
@@ -185,6 +187,21 @@ def get_args_parser():
     parser.add_argument('--world_size', default=1, type=int,
                         help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
+
+
+    parser.add_argument('--memfs_imnet', action="store_true")
+    parser.add_argument('--log_to_wandb', action="store_true",   
+                        help='log to weights and biases dashboard') 
+    parser.add_argument('--wandb_run_name', default=None, type=str, 
+                        help='log to weights and biases dashboard') 
+    parser.add_argument('--wandb_model_name', default=None, type=str,   
+                        help='log to weights and biases dashboard')
+
+    parser.add_argument('--sample_divisions', action="store_true",
+                        help='sample vit and input divisions during training.')
+
+
+
     return parser
 
 
@@ -192,6 +209,22 @@ def main(args):
     utils.init_distributed_mode(args)
 
     print(args)
+
+    ext_logger = None
+    if args.log_to_wandb and utils.is_main_process():   
+        import wandb    
+        wandb.login()   
+        wandb.init( 
+            # Set the project where this run will be logged 
+            project="compvit",   
+            # Track hyperparameters and run metadata    
+            config=vars(args),  
+            name=args.wandb_run_name    
+        )   
+        def log_to_wandb(log_dict, step):   
+            if utils.is_main_process(): 
+                wandb.log(log_dict, step=step)  
+        ext_logger = log_to_wandb
 
     if args.distillation_type != 'none' and args.finetune and not args.eval:
         raise NotImplementedError("Finetuning with distillation not yet supported")
@@ -206,8 +239,20 @@ def main(args):
 
     cudnn.benchmark = True
 
-    dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
-    dataset_val, _ = build_dataset(is_train=False, args=args)
+    if args.memfs_imnet:
+        args.data_path = prepare_imagenet(args.data_path)
+
+
+    try:
+        dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
+    except:
+        print("Couldnt load train dataset.")
+        dataset_train = None
+
+    dataset_val, args.nb_classes = build_dataset(is_train=False, args=args)
+    if dataset_train is None:
+        assert args.eval
+        dataset_train = dataset_val
 
     if args.distributed:
         num_tasks = utils.get_world_size()
@@ -342,7 +387,7 @@ def main(args):
 
     model_without_ddp = model
     if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
@@ -410,8 +455,11 @@ def main(args):
                 loss_scaler.load_state_dict(checkpoint['scaler'])
         lr_scheduler.step(args.start_epoch)
     if args.eval:
-        test_stats = evaluate(data_loader_val, model, device)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        test_stats = evaluate(data_loader_val, model, device, ext_logger=ext_logger)
+        
+        if args.output_dir and utils.is_main_process():
+            with (output_dir / "log.txt").open("a") as f:
+                f.write(json.dumps(test_stats) + "\n")
         return
 
     print(f"Start training for {args.epochs} epochs")
@@ -426,7 +474,8 @@ def main(args):
             optimizer, device, epoch, loss_scaler,
             args.clip_grad, model_ema, mixup_fn,
             set_training_mode=args.train_mode,  # keep in eval mode for deit finetuning / train mode for training and deit III finetuning
-            args = args,
+            args = args, ext_logger=ext_logger,
+            sample_divisions=args.sample_divisions,
         )
 
         lr_scheduler.step(epoch)
@@ -444,7 +493,7 @@ def main(args):
                 }, checkpoint_path)
              
 
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model, device, epoch=epoch, ext_logger=ext_logger, KMs=[[0,1], [4,16], [8,16]])
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         
         if max_accuracy < test_stats["acc1"]:
