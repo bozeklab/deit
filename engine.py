@@ -95,10 +95,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None):
+def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None, KMs=[[0,1]]):
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
-    KMs = [[0,1], [4,16], [8,16]]
     # switch to evaluation mode
     model.eval()
     division_masks = get_division_masks_for_model(model)
