@@ -5,6 +5,7 @@ import json
 
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import ImageFolder, default_loader
+from torchvision.datasets import StanfordCars, Flowers102
 
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data import create_transform
@@ -87,6 +88,12 @@ def build_dataset(is_train, args):
         dataset = INatDataset(args.data_path, train=is_train, year=2019,
                               category=args.inat_category, transform=transform)
         nb_classes = dataset.nb_classes
+    elif args.data_set == 'CARS':
+        dataset = StanfordCars(args.data_path, split="train" if is_train else "test", transform=transform)
+        nb_classes = dataset.nb_classes
+    elif args.data_set == 'FLOWERS':
+        dataset = Flowers102(args.data_path, split="train" if is_train else "test", transform=transform)
+        nb_classes = 102
 
     return dataset, nb_classes
 

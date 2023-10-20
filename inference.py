@@ -16,7 +16,7 @@ from fvcore.nn import FlopCountAnalysis
 import pandas as pd
 
 def get_args_parser():
-    parser = argparse.ArgumentParser('DeiT training and evaluation script', add_help=False)
+    parser = argparse.ArgumentParser('Script containing tasks with inference only', add_help=False)
     parser.add_argument('--batch-size', default=64, type=int)
     # Model parameters
     parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
@@ -240,33 +240,34 @@ def default_transform_dataset(is_train, args):
     return dataset, nb_classes
 
 
-
-def main(args):
+def main_setup(args):
     if args.checkpoint is None:
         print("[WARNING] --checkpoint is None")
 
     output_dir = Path(args.output_dir)
+    Path(args.output_dir).mkdir(parents=True, exist_ok=args.output_dir == "debug")
+
     with open(os.path.join(output_dir, "args.json"), "w") as f:
         json.dump(args.__dict__, f, indent=2)
 
     utils.init_distributed_mode(args)
-    dataset_val, nb_classes = default_transform_dataset(is_train=args.data_split == "train", args=args)
+    dataset, nb_classes = default_transform_dataset(is_train=args.data_split == "train", args=args)
     with open(os.path.join(output_dir, "class_to_idx.json"), "a") as f:
-        f.write(json.dumps(dataset_val.class_to_idx))
+        f.write(json.dumps(dataset.class_to_idx))
     if args.distributed:
         num_tasks = utils.get_world_size()
         global_rank = utils.get_rank()
-        if len(dataset_val) % num_tasks != 0:
+        if len(dataset) % num_tasks != 0:
             print('Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
                   'This will slightly alter validation results as extra duplicate entries are added to achieve '
                   'equal num of samples per-process.')
-        sampler_val = torch.utils.data.DistributedSampler(
-            dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+        sampler = torch.utils.data.DistributedSampler(
+            dataset, num_replicas=num_tasks, rank=global_rank, shuffle=False)
     else:
-        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+        sampler = torch.utils.data.SequentialSampler(dataset)
     
-    data_loader_val = torch.utils.data.DataLoader(
-        dataset_val, sampler=sampler_val,
+    data_loader = torch.utils.data.DataLoader(
+        dataset, sampler=sampler,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         pin_memory=args.pin_mem,
@@ -290,10 +291,15 @@ def main(args):
         checkpoint = torch.load(args.checkpoint, map_location='cpu')
         model_without_ddp.load_state_dict(checkpoint['model'])
 
+    return model, data_loader, nb_classes, output_dir
+
+def main(args):
+    model, data_loader, nb_classes, output_dir = main_setup(args)
+    if args.checkpoint is not None:
         for task_name in args.evaluate:
             task = globals()[task_name]
             test_stats = task(
-                data_loader=data_loader_val,
+                data_loader=data_loader,
                 model=model,
                 device=args.device,
                 group_by_class=args.group_by_class,
@@ -305,7 +311,7 @@ def main(args):
             assert not args.distributed
             task = globals()[task_name]
             test_stats = task(
-                data_loader=data_loader_val,
+                data_loader=data_loader,
                 model=model,
                 device=args.device,
                 group_by_class=args.group_by_class,
@@ -328,5 +334,4 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
-    Path(args.output_dir).mkdir(parents=True, exist_ok=args.output_dir == "debug")
     main(args)
