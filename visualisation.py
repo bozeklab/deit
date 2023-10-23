@@ -102,30 +102,33 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
 
     return ret
 
+
 def PCA_path_tokens(features):
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import minmax_scale
 
     embed_dim = 384
 
+    images = []
+    for i in range(1, 5):
+        image = Image.open(f"./experiments/data/crane{i}.jpg")
+        image = image.resize((448, 448))
+        image = image.convert("RGB")
+
+        images.append(image)
+
     for kM in features.keys():
         patch_tokens = features[kM]['features'][0].reshape([4, embed_dim, -1])
 
-        print('!!!!!')
-        print(patch_tokens.shape)
-
         fg_pca = PCA(n_components=1)
 
-        masks = []
+        #masks = []
         fig = plt.figure(figsize=(10, 10))
 
         all_patches = patch_tokens.reshape([-1, embed_dim])
         reduced_patches = fg_pca.fit_transform(all_patches)
         # scale the feature to (0,1)
         norm_patches = minmax_scale(reduced_patches)
-
-        print('!!!')
-        print(norm_patches.shape)
 
         # reshape the feature value to the original image size
         image_norm_patches = norm_patches.reshape([4, 28, 28])
@@ -135,11 +138,14 @@ def PCA_path_tokens(features):
 
             # choose a threshold to segment the foreground
             mask = (image_patches > 0.6).ravel()
-            masks.append(mask)
+            #masks.append(mask)
+            print('!!')
+            print(np.shape(mask))
 
             image_patches[np.logical_not(mask)] = 0
 
             plt.subplot(221 + i)
+            plt.imshow(images[i])
             plt.imshow(image_patches.reshape([32, -1]).T, extent=(0, 448, 448, 0), alpha=0.5)
             fig.savefig(f"output_{kM}_{i}.png")
 
@@ -180,6 +186,7 @@ def main(args):
     model = main_setup(args)
 
     ret_dict = extract_k16(model, args.device, random_masks=False)
+
 
     PCA_path_tokens(ret_dict)
 
