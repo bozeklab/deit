@@ -290,7 +290,8 @@ def main_setup(args):
     
     if args.checkpoint is not None:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')
-        model_without_ddp.load_state_dict(checkpoint['model'])
+        msg = model_without_ddp.load_state_dict(checkpoint['model'])
+        print(msg)
 
     return model, data_loader, nb_classes, output_dir
 
