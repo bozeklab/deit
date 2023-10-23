@@ -90,14 +90,13 @@ def extract(model, KMs, random_masks, seq: bool=False):
     # We need to reorder the images to [batch, channel, width, height]
     # The array of loaded images is [batch, height, width, channel]
 
-    with torch.cuda.amp.autocast():
-        for k, m in KMs:
-            if random_masks:
-                masks = sample_masks(division_masks, m)
-            else:
-                masks = division_masks[m][0]
-            features = model(input_tensor, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
-            ret[f"{k}_{m}"]["features"].append(features)
+    for k, m in KMs:
+        if random_masks:
+            masks = sample_masks(division_masks, m)
+        else:
+            masks = division_masks[m][0]
+        features = model(input_tensor, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
+        ret[f"{k}_{m}"]["features"].append(features)
 
     return ret
 
