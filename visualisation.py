@@ -111,6 +111,9 @@ def PCA_path_tokens(features):
     for kM in features.keys():
         patch_tokens = features[kM]['features'][0].reshape([4, embed_dim, -1])
 
+        print('!!!')
+        print(patch_tokens.shape)
+
         fg_pca = PCA(n_components=1)
 
         masks = []
