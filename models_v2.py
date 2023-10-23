@@ -7,7 +7,7 @@ import random
 from functools import partial
 
 from timm.models.vision_transformer import Mlp, VisionTransformer, _cfg, Block
-from timm.layers import PatchEmbed
+from timm.models.layers import PatchEmbed
 from timm.models.vision_transformer_hybrid import HybridEmbed
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
