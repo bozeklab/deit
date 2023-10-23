@@ -108,7 +108,7 @@ def main_setup(args):
         checkpoint = torch.load(args.checkpoint, map_location='cpu')
         utils.interpolate_pos_embed(model, checkpoint['model'])
         msg = model.load_state_dict(checkpoint['model'])
-        print(msg)
+        print("Loaded checkpoint: ", msg)
 
     return model
 
