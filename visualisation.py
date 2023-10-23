@@ -109,7 +109,7 @@ def PCA_path_tokens(features):
     embed_dim = 384
 
     for kM in features.keys():
-        patch_tokens = features[kM]['features'].reshape([4, embed_dim, -1])
+        patch_tokens = features[kM]['features'][0].reshape([4, embed_dim, -1])
 
         fg_pca = PCA(n_components=1)
 
