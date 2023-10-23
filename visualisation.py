@@ -107,7 +107,7 @@ def PCA_path_tokens(features):
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import minmax_scale
 
-    embed_dim = 384
+    feat_dim = 384
 
     images = []
     for i in range(1, 5):
@@ -118,14 +118,23 @@ def PCA_path_tokens(features):
         images.append(image)
 
     for kM in features.keys():
-        patch_tokens = features[kM]['features'][0].reshape([4, embed_dim, -1])
+        patch_tokens = features[kM]['features'][0].reshape([4, feat_dim, -1])
+
+        total_features = patch_tokens.reshape(4 * 28 * 28, feat_dim) #4(*H*w, 1024)
+
+        pca = PCA(n_components=3)
+        pca.fit(total_features)
+        pca_features = pca.transform(total_features)
+
+        pca_features[:, 0] = (pca_features[:, 0] - pca_features[:, 0].min()) / \
+                             (pca_features[:, 0].max() - pca_features[:, 0].min())
 
         fg_pca = PCA(n_components=1)
 
         #masks = []
         fig = plt.figure(figsize=(10, 10))
 
-        all_patches = patch_tokens.reshape([-1, embed_dim])
+        all_patches = patch_tokens.reshape([-1, feat_dim])
         reduced_patches = fg_pca.fit_transform(all_patches)
         # scale the feature to (0,1)
         norm_patches = minmax_scale(reduced_patches)
@@ -134,16 +143,9 @@ def PCA_path_tokens(features):
         image_norm_patches = norm_patches.reshape([4, 28, 28])
 
         for i in range(4):
-            image_patches = image_norm_patches[i, :]
+            plt.subplot(2, 2, i + 1)
+            plt.imshow(pca_features[i * 28 * 28: (i + 1) * 28 * 28, 0].reshape(28, 28))
 
-            # choose a threshold to segment the foreground
-            mask = (image_patches > 0.6).ravel()
-
-            image_patches[np.logical_not(mask.reshape([28, 28]))] = 0
-
-            plt.subplot(221 + i)
-            plt.imshow(images[i])
-            plt.imshow(image_patches.reshape([28, -1]).T, extent=(0, 448, 448, 0), alpha=0.5)
             fig.savefig(f"output_{kM}_{i}.png")
 
 
