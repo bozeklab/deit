@@ -106,21 +106,23 @@ def PCA_path_tokens(features):
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import minmax_scale
 
+    embed_dim = 384
+
     for kM in features.keys():
-        patch_tokens = features[kM]['features'].reshape([4, 384, -1])
+        patch_tokens = features[kM]['features'].reshape([4, embed_dim, -1])
 
         fg_pca = PCA(n_components=1)
 
         masks = []
         fig = plt.figure(figsize=(10, 10))
 
-        all_patches = patch_tokens.reshape([-1, 1024])
+        all_patches = patch_tokens.reshape([-1, embed_dim])
         reduced_patches = fg_pca.fit_transform(all_patches)
         # scale the feature to (0,1)
         norm_patches = minmax_scale(reduced_patches)
 
         # reshape the feature value to the original image size
-        image_norm_patches = norm_patches.reshape([4, 1024])
+        image_norm_patches = norm_patches.reshape([4, embed_dim])
 
         for i in range(4):
             image_patches = image_norm_patches[i, :]
