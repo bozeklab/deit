@@ -140,6 +140,8 @@ def main(args):
 
     ret_dict = extract_k16(model, args.device, random_masks=False)
 
+    print(ret_dict)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Visualization script', parents=[get_args_parser()])
