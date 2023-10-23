@@ -143,7 +143,7 @@ def PCA_path_tokens(features):
 
             plt.subplot(221 + i)
             plt.imshow(images[i])
-            plt.imshow(image_patches.reshape([32, -1]).T, extent=(0, 448, 448, 0), alpha=0.5)
+            plt.imshow(image_patches.reshape([28, -1]).T, extent=(0, 448, 448, 0), alpha=0.5)
             fig.savefig(f"output_{kM}_{i}.png")
 
 
