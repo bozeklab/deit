@@ -186,6 +186,7 @@ def count_flops(create_model_fn, img_size):
         flops = {}
         for k in tqdm(range(len(create_model_fn().blocks)), f"K: "):
             flops[k] = []
+            model = create_model_fn()
             model.comp_next_init()
             cache = model._comp_next_cache
             for i, [img, id] in enumerate(zip(imgs, division_ids)):
