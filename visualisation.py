@@ -106,6 +106,7 @@ def main_setup(args):
 
     if args.checkpoint is not None:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')
+        utils.interpolate_pos_embed(model, checkpoint['model'])
         msg = model.load_state_dict(checkpoint['model'])
         print(msg)
 
@@ -115,6 +116,7 @@ def main_setup(args):
 def main(args):
     model = main_setup(args)
     model = model.to(args.device)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Visualization script', parents=[get_args_parser()])
