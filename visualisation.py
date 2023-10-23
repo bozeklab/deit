@@ -58,5 +58,31 @@ def get_args_parser():
     return parser
 
 
+def main_setup(args):
+    if args.checkpoint is None:
+        print("[WARNING] --checkpoint is None")
+
+    output_dir = Path(args.output_dir)
+    Path(args.output_dir).mkdir(parents=True, exist_ok=args.output_dir == "debug")
+
+    with open(os.path.join(output_dir, "args.json"), "w") as f:
+        json.dump(args.__dict__, f, indent=2)
+
+    model = create_model(
+        args.model,
+        pretrained=False,
+        num_classes=1e3,
+        img_size=args.input_size
+    )
+    model = model.to(args.device)
+
+
+def main(args):
+    model, data_loader, nb_classes, output_dir = main_setup(args)
+
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('Visualisation script', parents=[get_args_parser()])
+    parser = argparse.ArgumentParser('Visualization script', parents=[get_args_parser()])
+    args = parser.parse_args()
+    main(args)
+
