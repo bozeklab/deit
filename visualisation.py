@@ -66,7 +66,7 @@ def get_args_parser():
 
 
 @torch.no_grad()
-def extract(model, KMs, random_masks, seq: bool=False):
+def extract(model, device, KMs, random_masks, seq: bool=False):
     # switch to evaluation mode
     model.eval()
     division_masks = get_division_masks_for_model(model)
@@ -90,20 +90,21 @@ def extract(model, KMs, random_masks, seq: bool=False):
     # We need to reorder the images to [batch, channel, width, height]
     # The array of loaded images is [batch, height, width, channel]
 
-    for k, m in KMs:
-        if random_masks:
-            masks = sample_masks(division_masks, m)
-        else:
-            masks = division_masks[m][0]
-        features = model(input_tensor, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
-        ret[f"{k}_{m}"]["features"].append(features)
+    with torch.cuda.amp.autocast():
+        for k, m in KMs:
+            if random_masks:
+                masks = sample_masks(division_masks, m)
+            else:
+                masks = division_masks[m][0]
+            features = model(input_tensor, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
+            ret[f"{k}_{m}"]["features"].append(features)
 
     return ret
 
 
-def extract_k16(model, random_masks, *args, **kwargs):
+def extract_k16(model, device, random_masks, *args, **kwargs):
     KMs = [[k, 16] for k in range(len(model.blocks) + 1)]
-    return extract(model, KMs=KMs, random_masks=random_masks)
+    return extract(model, device, KMs=KMs, random_masks=random_masks)
 
 
 def main_setup(args):
@@ -135,9 +136,8 @@ def main_setup(args):
 
 def main(args):
     model = main_setup(args)
-    model = model.to(args.device)
 
-    ret_dict = extract_k16(model, random_masks=False)
+    ret_dict = extract_k16(model, args.device, random_masks=False)
 
 
 if __name__ == '__main__':
