@@ -103,10 +103,38 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
     return ret
 
 def PCA_path_tokens(features):
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import minmax_scale
+
     for kM in features.keys():
-        print(f"Processing {kM}:")
-        patches = features[kM]['features']
-        print(np.shape(patches))
+        patch_tokens = features[kM]['features'].reshape([4, 384, -1])
+
+        fg_pca = PCA(n_components=1)
+
+        masks = []
+        fig = plt.figure(figsize=(10, 10))
+
+        all_patches = patch_tokens.reshape([-1, 1024])
+        reduced_patches = fg_pca.fit_transform(all_patches)
+        # scale the feature to (0,1)
+        norm_patches = minmax_scale(reduced_patches)
+
+        # reshape the feature value to the original image size
+        image_norm_patches = norm_patches.reshape([4, 1024])
+
+        for i in range(4):
+            image_patches = image_norm_patches[i, :]
+
+            # choose a threshold to segment the foreground
+            mask = (image_patches > 0.6).ravel()
+            masks.append(mask)
+
+            image_patches[np.logical_not(mask)] = 0
+
+            plt.subplot(221 + i)
+            plt.imshow(image_patches.reshape([32, -1]).T, extent=(0, 448, 448, 0), alpha=0.5)
+            fig.savefig(f"output_{kM}_{i}.png")
+
 
 def extract_k16(model, device, random_masks, *args, **kwargs):
     KMs = [[k, 16] for k in range(len(model.blocks) + 1)]
