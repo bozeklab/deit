@@ -80,7 +80,6 @@ def extract(model, KMs, random_masks, seq: bool=False):
         image = cv2.imread(f"./experiments/data/crane{i}.jpg")
         image = cv2.resize(image, (448, 448))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = image.astype('float32') / 255
         images.append(image)
         plt.subplot(220 + i)
         plt.imshow(image)
@@ -90,7 +89,7 @@ def extract(model, KMs, random_masks, seq: bool=False):
     images_arr = np.stack(images)
     input_tensor = torch.Tensor(np.transpose(images_arr, [0, 3, 2, 1]))
 
-    transform = TT.Compose([TT.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD)])
+    transform = TT.Compose([TT.ToTensor(), TT.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD)])
 
     input_tensor = transform(input_tensor)
 
