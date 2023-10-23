@@ -111,9 +111,6 @@ def PCA_path_tokens(features):
     for kM in features.keys():
         patch_tokens = features[kM]['features'][0].reshape([4, embed_dim, -1])
 
-        print('!!!')
-        print(patch_tokens.shape)
-
         fg_pca = PCA(n_components=1)
 
         masks = []
@@ -123,6 +120,9 @@ def PCA_path_tokens(features):
         reduced_patches = fg_pca.fit_transform(all_patches)
         # scale the feature to (0,1)
         norm_patches = minmax_scale(reduced_patches)
+
+        print('!!!')
+        print(norm_patches.shape)
 
         # reshape the feature value to the original image size
         image_norm_patches = norm_patches.reshape([4, embed_dim])
