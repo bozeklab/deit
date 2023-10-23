@@ -184,8 +184,7 @@ def count_flops(create_model_fn, img_size):
 
     with torch.no_grad():
         flops = {}
-        model = create_model_fn()
-        for k in tqdm(range(len(model.blocks)), f"K: "):
+        for k in tqdm(range(len(create_model_fn().blocks)), f"K: "):
             flops[k] = []
             model.comp_next_init()
             cache = model._comp_next_cache
