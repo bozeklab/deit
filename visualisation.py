@@ -100,7 +100,7 @@ def main_setup(args):
     model = create_model(
         args.model,
         pretrained=False,
-        num_classes=1e3,
+        num_classes=1000,
         img_size=args.input_size
     )
     model = model.to(args.device)
