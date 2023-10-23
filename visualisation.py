@@ -77,6 +77,7 @@ def extract(model, KMs, random_masks, seq: bool=False):
     }
 
     images = []
+    transform = TT.Compose([TT.ToTensor(), TT.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD)])
     for i in range(1, 5):
         image = Image.open(f"./experiments/data/crane{i}.jpg")
         image = image.resize((448, 448))
@@ -85,15 +86,12 @@ def extract(model, KMs, random_masks, seq: bool=False):
         images.append(image)
         plt.subplot(220 + i)
         plt.imshow(image)
+        images.append(transform(image))
+
+    input_tensor = torch.stack(images)
 
     # We need to reorder the images to [batch, channel, width, height]
     # The array of loaded images is [batch, height, width, channel]
-    images_arr = np.stack(images)
-    input_tensor = torch.Tensor(np.transpose(images_arr, [0, 3, 2, 1]))
-
-    transform = TT.Compose([TT.ToTensor(), TT.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD)])
-
-    input_tensor = transform(input_tensor)
 
     with torch.cuda.amp.autocast():
         for k, m in KMs:
