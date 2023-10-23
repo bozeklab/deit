@@ -194,6 +194,8 @@ def count_flops(create_model_fn, img_size):
                 model.forward = partial(model.comp_next, K=k, ids=id)
                 model.eval()
                 model._comp_next_cache = cache
+                print('!!!')
+                print(img.shape)
                 flops[k].append(FlopCountAnalysis(model, img).total())
                 cache = model._comp_next_cache
                 assert len(cache["xs_feats"]) == i+1, len(cache["xs_feats"])
