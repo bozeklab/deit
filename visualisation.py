@@ -77,7 +77,7 @@ def extract(model, KMs, random_masks, seq: bool=False):
 
     images = []
     for i in range(1, 5):
-        image = cv2.imread(f"./data/crane/crane{i}.jpg");
+        image = cv2.imread(f"./experiments/data/crane/crane{i}.jpg");
         image = cv2.resize(image, (448, 448))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = image.astype('float32') / 255
