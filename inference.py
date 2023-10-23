@@ -179,7 +179,7 @@ def count_flops(create_model_fn, img_size):
     for divm in division_masks:
         divm = np.expand_dims(divm, [0, 1]).repeat(3, axis=1).repeat(16, axis=2).repeat(16, axis=3)
         divm = np.expand_dims(divm, axis=0)
-        H, W = divm.sum(axis=2).max(), divm.sum(axis=3).max()
+        H, W = divm.sum(axis=3).max(), divm.sum(axis=4).max()
         imgs.append(IMG[divm].reshape(1, 3, H, W))
 
     with torch.no_grad():
