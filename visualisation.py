@@ -10,9 +10,12 @@ from timm.utils import accuracy
 import numpy as np
 import models
 import models_v2
+from matplotlib import pyplot as plt
+import cv2
 from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS
 from functools import partial
 from fvcore.nn import FlopCountAnalysis
+import torchvision.transforms as TT
 import pandas as pd
 
 
@@ -58,6 +61,31 @@ def get_args_parser():
     return parser
 
 
+@torch.no_grad()
+def extract(model, device, KMs, random_masks, seq: bool=False):
+    # switch to evaluation mode
+    model.eval()
+
+    images = []
+    for i in range(1, 5):
+        image = cv2.imread(f"./data/crane/crane{i}.jpg");
+        image = cv2.resize(image, (448, 448))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = image.astype('float32') / 255
+        images.append(image)
+        plt.subplot(220 + i)
+        plt.imshow(image)
+
+    # We need to reorder the images to [batch, channel, widht, height]
+    # The array of loaded images is [batch, height, width, channel]
+    images_arr = np.stack(images)
+    input_tensor = torch.Tensor(np.transpose(images_arr, [0, 3, 2, 1]))
+
+    transform = TT.Compose([TT.Normalize(mean=0.5, std=0.2)])
+
+    input_tensor = transform(input_tensor)
+
+
 def main_setup(args):
     if args.checkpoint is None:
         print("[WARNING] --checkpoint is None")
@@ -76,10 +104,17 @@ def main_setup(args):
     )
     model = model.to(args.device)
 
+    if args.checkpoint is not None:
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')
+        msg = model.load_state_dict(checkpoint['model'])
+        print(msg)
+
+    return model
+
 
 def main(args):
-    model, data_loader, nb_classes, output_dir = main_setup(args)
-
+    model = main_setup(args)
+    model = model.to(args.device)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Visualization script', parents=[get_args_parser()])
