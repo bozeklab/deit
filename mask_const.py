@@ -44,7 +44,6 @@ def division_ids_from_spec(specs):
         ret[k].append(_generate_ids(**v_rot))
     return ret
 
-
 DIVISION_SPECS_14_14 = {
     1: {"xs": [14], "ys": [14]},
     2: {"xs": [14], "ys": [7, 7]},
@@ -56,6 +55,13 @@ DIVISION_SPECS_14_14 = {
     9: {"xs": [5, 4, 5], "ys": [5, 4, 5]},
     12: {"xs": [4, 3, 3, 4], "ys": [5, 4, 5]},
 }
+
+DIVISION_SPECS_28_28 = {}
+for key, value in DIVISION_SPECS_14_14.items():
+    DIVISION_SPECS_28_28[key * 2] = {
+        "xs": [x * 2 for x in value["xs"]],
+        "ys": [y * 2 for y in value["ys"]],
+    }
 
 DIVISION_SPECS_12_12 = {
     1: {"xs": [12], "ys": [12]},
@@ -71,12 +77,14 @@ DIVISION_SPECS_12_12 = {
 
 DIVISION_MASKS = {
     12: division_masks_from_spec(DIVISION_SPECS_12_12),
-    14: division_masks_from_spec(DIVISION_SPECS_14_14)
+    14: division_masks_from_spec(DIVISION_SPECS_14_14),
+    28: division_masks_from_spec(DIVISION_SPECS_28_28)
 }
 
 DIVISION_IDS = {
     12: division_ids_from_spec(DIVISION_SPECS_12_12),
-    14: division_ids_from_spec(DIVISION_SPECS_14_14)
+    14: division_ids_from_spec(DIVISION_SPECS_14_14),
+    28: division_ids_from_spec(DIVISION_SPECS_28_28)
 }
 
 import random
