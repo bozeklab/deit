@@ -80,6 +80,7 @@ def extract(model, KMs, random_masks, seq: bool=False):
         image = cv2.imread(f"./experiments/data/crane{i}.jpg")
         image = cv2.resize(image, (448, 448))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = np.asarray(image)
         images.append(image)
         plt.subplot(220 + i)
         plt.imshow(image)
