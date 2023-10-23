@@ -177,15 +177,16 @@ def count_flops(create_model_fn, img_size):
     division_ids = DIVISION_IDS[14][16][0]
     imgs = []
     for divm in division_masks:
-        divm = np.expand_dims(divm, [0,1]).repeat(3, axis=1).repeat(16, axis=2).repeat(16, axis=3)
+        divm = np.expand_dims(divm, [0, 1]).repeat(3, axis=1).repeat(16, axis=2).repeat(16, axis=3)
+        divm = np.expand_dims(divm, axis=0)
         H, W = divm.sum(axis=2).max(), divm.sum(axis=3).max()
         imgs.append(IMG[divm].reshape(1, 3, H, W))
 
     with torch.no_grad():
         flops = {}
-        for k in tqdm(range(len(create_model_fn().blocks)), f"K: "):
+        model = create_model_fn()
+        for k in tqdm(range(len(model.blocks)), f"K: "):
             flops[k] = []
-            model = create_model_fn()
             model.comp_next_init()
             cache = model._comp_next_cache
             for i, [img, id] in enumerate(zip(imgs, division_ids)):
