@@ -138,11 +138,8 @@ def PCA_path_tokens(features):
 
             # choose a threshold to segment the foreground
             mask = (image_patches > 0.6).ravel()
-            #masks.append(mask)
-            print('!!')
-            print(np.shape(mask))
 
-            image_patches[np.logical_not(mask)] = 0
+            image_patches[np.logical_not(mask.reshape([28, 28]))] = 0
 
             plt.subplot(221 + i)
             plt.imshow(images[i])
