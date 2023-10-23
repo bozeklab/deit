@@ -6,7 +6,8 @@ import torch.nn as nn
 import random
 from functools import partial
 
-from timm.models.vision_transformer import Mlp, VisionTransformer, _cfg, PatchEmbed, Block
+from timm.models.vision_transformer import Mlp, VisionTransformer, _cfg, Block
+from timm.layers import PatchEmbed
 from timm.models.vision_transformer_hybrid import HybridEmbed
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
@@ -421,7 +422,7 @@ def deit_tiny_patch16_LS(pretrained=False, img_size=224, pretrained_21k = False,
 @register_model
 def deit_small_patch16_LS(pretrained=False, img_size=224, pretrained_21k = False,  **kwargs):
     model = vit_models(
-        img_size = img_size, patch_size=16, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True,
+        img_size=img_size, patch_size=16, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),block_layers=Layer_scale_init_Block, **kwargs)
     model.default_cfg = _cfg()
     if pretrained:
