@@ -2,6 +2,8 @@ import torch
 import argparse
 import json
 import os
+
+from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.models import create_model
 from pathlib import Path
 from tqdm import tqdm
@@ -25,7 +27,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--input_size', default=224, type=int, help='images input size')
+    parser.add_argument('--input_size', default=448, type=int, help='images input size')
     parser.add_argument('--eval-crop-ratio', default=1., type=float, help="Crop ratio for evaluation")
 
     parser.add_argument('--data-path', default=f'~/datasets/imagenet/ILSVRC/Data/CLS-LOC/', type=str,
@@ -63,9 +65,15 @@ def get_args_parser():
 
 
 @torch.no_grad()
-def extract(model, device, KMs, random_masks, seq: bool=False):
+def extract(model, KMs, random_masks, seq: bool=False):
     # switch to evaluation mode
     model.eval()
+    division_masks = get_division_masks_for_model(model)
+
+    ret = {
+        f"{k}_{m}": {"features": [], "targets": []}
+        for k, m in KMs
+    }
 
     images = []
     for i in range(1, 5):
@@ -77,14 +85,30 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
         plt.subplot(220 + i)
         plt.imshow(image)
 
-    # We need to reorder the images to [batch, channel, widht, height]
+    # We need to reorder the images to [batch, channel, width, height]
     # The array of loaded images is [batch, height, width, channel]
     images_arr = np.stack(images)
     input_tensor = torch.Tensor(np.transpose(images_arr, [0, 3, 2, 1]))
 
-    transform = TT.Compose([TT.Normalize(mean=0.5, std=0.2)])
+    transform = TT.Compose([TT.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD)])
 
     input_tensor = transform(input_tensor)
+
+    with torch.cuda.amp.autocast():
+        for k, m in KMs:
+            if random_masks:
+                masks = sample_masks(division_masks, m)
+            else:
+                masks = division_masks[m][0]
+            features = model(input_tensor, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
+            ret[f"{k}_{m}"]["features"].append(features)
+
+    return ret
+
+
+def extract_k16(model, random_masks, *args, **kwargs):
+    KMs = [[k, 16] for k in range(len(model.blocks) + 1)]
+    return extract(model, KMs=KMs, random_masks=random_masks)
 
 
 def main_setup(args):
@@ -117,6 +141,8 @@ def main_setup(args):
 def main(args):
     model = main_setup(args)
     model = model.to(args.device)
+
+    ret_dict = extract_k16(model, random_masks=False)
 
 
 if __name__ == '__main__':
