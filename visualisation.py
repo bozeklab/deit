@@ -129,24 +129,13 @@ def PCA_path_tokens(features):
         pca_features[:, 0] = (pca_features[:, 0] - pca_features[:, 0].min()) / \
                              (pca_features[:, 0].max() - pca_features[:, 0].min())
 
-        fg_pca = PCA(n_components=1)
-
-        #masks = []
         fig = plt.figure(figsize=(10, 10))
-
-        all_patches = patch_tokens.reshape([-1, feat_dim])
-        reduced_patches = fg_pca.fit_transform(all_patches)
-        # scale the feature to (0,1)
-        norm_patches = minmax_scale(reduced_patches)
-
-        # reshape the feature value to the original image size
-        image_norm_patches = norm_patches.reshape([4, 28, 28])
 
         for i in range(4):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features[i * 28 * 28: (i + 1) * 28 * 28, 0].reshape(28, 28))
 
-            fig.savefig(f"output_{kM}_{i}.png")
+            fig.savefig(f"output_{kM}.png")
 
 
 def extract_k16(model, device, random_masks, *args, **kwargs):
