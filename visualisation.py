@@ -38,6 +38,9 @@ def get_args_parser():
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
                         type=str, help='semantic granularity')
 
+    parser.add_argument('--output_dir', type=str, required=True,
+                        help='path where to save')
+
     parser.add_argument('--checkpoint', default=None, help="path to model checkpoint")
     parser.add_argument('--device', default="cuda", type=str)
 
