@@ -83,12 +83,8 @@ def extract(model, KMs, random_masks, seq: bool=False):
         image = image.resize((448, 448))
         image = image.convert("RGB")
 
-        images.append(image)
-        plt.subplot(220 + i)
-        plt.imshow(image)
         images.append(transform(image))
 
-    print(images)
     input_tensor = torch.stack(images)
 
     # We need to reorder the images to [batch, channel, width, height]
