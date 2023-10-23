@@ -171,7 +171,7 @@ def extract_01(data_loader, model, device, random_masks, *args, **kwargs):
 # -------------------- FLOPS ---------------------
 
 def count_flops(create_model_fn, img_size):
-    IMG = torch.zeros(1,3,img_size,img_size)
+    IMG = torch.zeros(1, 3, img_size,img_size)
     division_masks = DIVISION_MASKS[14][16][0]
     division_ids = DIVISION_IDS[14][16][0]
     imgs = []
@@ -326,7 +326,7 @@ def main(args):
             img_size=args.input_size
         )
         flops = count_flops(create_model_fn, args.input_size)
-        flat_flops = [(str(k),i, v/1000000000) for k, l in flops.items() for i, v in enumerate(l)]
+        flat_flops = [(str(k),i, v / 1e9) for k, l in flops.items() for i, v in enumerate(l)]
         df = pd.DataFrame(flat_flops, columns=["K", "i", "GFLOPs"])
         pd.DataFrame.to_csv(df, os.path.join(output_dir, "count_flops.csv"))
 
