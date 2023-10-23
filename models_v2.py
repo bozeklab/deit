@@ -314,7 +314,7 @@ class vit_models(nn.Module):
         i = self._comp_next_cache["i"]
 
         self._comp_next_cache["cls_mean"] = cls_mean * i/(i+1) + x[:,[0], :] / (i+1)
-        self._comp_next_cache["xs_feats"].append(x[:,1:,:])
+        self._comp_next_cache["xs_feats"].append(x[:, 1:, :])
         self._comp_next_cache["i"] += 1
 
         cls_mean, xs_feats = self._comp_next_cache["cls_mean"], self._comp_next_cache["xs_feats"]
