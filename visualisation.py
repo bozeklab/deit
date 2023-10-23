@@ -145,7 +145,7 @@ def main(args):
 
     ret_dict = extract_k16(model, args.device, random_masks=False)
 
-    print(ret_dict)
+    PCA_path_tokens(ret_dict)
 
 
 if __name__ == '__main__':
