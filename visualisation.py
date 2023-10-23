@@ -121,6 +121,8 @@ def PCA_path_tokens(features):
         # scale the feature to (0,1)
         norm_patches = minmax_scale(reduced_patches)
 
+        print('!!!')
+        print(norm_patches.shape)
 
         # reshape the feature value to the original image size
         image_norm_patches = norm_patches.reshape([4, 28, 28])
