@@ -102,6 +102,11 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
 
     return ret
 
+def PCA_path_tokens(features):
+    for kM in features.keys():
+        print(f"Processing {kM}:")
+        patches = features[kM]['features']
+        print(np.shape(patches))
 
 def extract_k16(model, device, random_masks, *args, **kwargs):
     KMs = [[k, 16] for k in range(len(model.blocks) + 1)]
