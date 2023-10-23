@@ -328,6 +328,7 @@ def main(args):
             pretrained=False,
             num_classes=nb_classes,
             img_size=args.input_size
+
         )
         flops = count_flops(create_model_fn, args.input_size)
         flat_flops = [(str(k),i, v / 1e9) for k, l in flops.items() for i, v in enumerate(l)]
