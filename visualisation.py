@@ -6,6 +6,7 @@ import os
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.models import create_model
 from pathlib import Path
+from PIL import Image
 from tqdm import tqdm
 import utils
 from timm.utils import accuracy
@@ -77,10 +78,10 @@ def extract(model, KMs, random_masks, seq: bool=False):
 
     images = []
     for i in range(1, 5):
-        image = cv2.imread(f"./experiments/data/crane{i}.jpg")
-        image = cv2.resize(image, (448, 448))
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = np.asarray(image)
+        image = Image.open(f"./experiments/data/crane{i}.jpg")
+        image = image.resize((448, 448))
+        image = image.convert("RGB")
+
         images.append(image)
         plt.subplot(220 + i)
         plt.imshow(image)
