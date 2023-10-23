@@ -154,7 +154,7 @@ def evaluate_km(data_loader, model, device, group_by_class, random_masks, *args,
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class, random_masks=random_masks)
 
 def evaluate_01_816(data_loader, model, device, group_by_class, random_masks, *args, **kwargs):
-    KMs = [[0,1], [8,16]]
+    KMs = [[0, 1], [8, 16]]
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class, random_masks=random_masks)
 
 def evaluate_k16_seq(data_loader, model, device, group_by_class, random_masks, *args, **kwargs):
@@ -166,20 +166,20 @@ def extract_k16(data_loader, model, device, random_masks, *args, **kwargs):
     return extract(data_loader, model, device, KMs=KMs, random_masks=random_masks)
 
 def extract_01(data_loader, model, device, random_masks, *args, **kwargs):
-    return extract(data_loader, model, device, KMs=[[0,1]], random_masks=random_masks)
+    return extract(data_loader, model, device, KMs=[[0, 1]], random_masks=random_masks)
 
 
 # -------------------- FLOPS ---------------------
 
 def count_flops(create_model_fn, img_size):
-    IMG = torch.zeros(1, 3, img_size,img_size)
+    IMG = torch.zeros(1, 3, img_size, img_size)
     division_masks = DIVISION_MASKS[14][16][0]
     division_ids = DIVISION_IDS[14][16][0]
     imgs = []
     for divm in division_masks:
         divm = np.expand_dims(divm, [0,1]).repeat(3, axis=1).repeat(16, axis=2).repeat(16, axis=3)
         H, W = divm.sum(axis=2).max(), divm.sum(axis=3).max()
-        imgs.append(IMG[divm].reshape(1,3,H, W))
+        imgs.append(IMG[divm].reshape(1, 3, H, W))
 
     with torch.no_grad():
         flops = {}
@@ -293,6 +293,7 @@ def main_setup(args):
         model_without_ddp.load_state_dict(checkpoint['model'])
 
     return model, data_loader, nb_classes, output_dir
+
 
 def main(args):
     model, data_loader, nb_classes, output_dir = main_setup(args)

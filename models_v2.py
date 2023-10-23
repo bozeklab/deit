@@ -181,12 +181,9 @@ class vit_models(nn.Module):
     """
     def __init__(self, img_size=224,  patch_size=16, in_chans=3, num_classes=1000, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
-                 drop_path_rate=0., norm_layer=nn.LayerNorm, global_pool=None,
-                 block_layers = Block,
-                 Patch_layer=PatchEmbed,act_layer=nn.GELU,
-                 Attention_block = Attention, Mlp_block=Mlp,
-                dpr_constant=True,init_scale=1e-4,
-                mlp_ratio_clstk = 4.0,**kwargs):
+                 drop_path_rate=0., norm_layer=nn.LayerNorm, global_pool=None, block_layers=Block,
+                 Patch_layer=PatchEmbed, act_layer=nn.GELU, Attention_block = Attention, Mlp_block=Mlp,
+                 dpr_constant=True, init_scale=1e-4, mlp_ratio_clstk = 4.0,**kwargs):
         super().__init__()
         
         self.dropout_rate = drop_rate
@@ -196,7 +193,7 @@ class vit_models(nn.Module):
         self.num_features = self.embed_dim = embed_dim
 
         self.patch_embed = Patch_layer(
-                img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim, strict_img_size=False)
+                img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
         num_patches = self.patch_embed.num_patches
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
