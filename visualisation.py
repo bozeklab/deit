@@ -165,7 +165,7 @@ def PCA_path_tokens_seg(features, patch_size=16):
     patch_w = 448 // patch_size
 
     images = []
-    for i in range(1, 5):
+    for i in range(1, 4):
         image = Image.open(f"./experiments/data/crane{i}.jpg")
         image = image.resize((448, 448))
         image = image.convert("RGB")
@@ -186,11 +186,11 @@ def PCA_path_tokens_seg(features, patch_size=16):
 
         fig = plt.figure(figsize=(10, 10))
 
-        for i in range(4):
+        for i in range(3):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features[i * patch_h * patch_w: (i + 1) * patch_h * patch_w, 0].reshape(patch_h, patch_w))
 
-            fig.savefig(f"output_{kM}.png")
+            fig.savefig(f"output_3_{kM}.png")
 
 
 def extract_k16(model, device, random_masks, *args, **kwargs):
