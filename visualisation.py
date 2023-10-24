@@ -128,7 +128,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
         pca.fit(total_features)
         pca_features = pca.transform(total_features)
 
-        pca_features_bg = pca_features[:, 0] > 0.35  # from first histogram
+        pca_features_bg = pca_features[:, 0] < 0.35  # from first histogram
         pca_features_fg = ~pca_features_bg
 
         pca.fit(total_features[pca_features_fg])
