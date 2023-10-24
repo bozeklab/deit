@@ -230,7 +230,7 @@ def main(args):
 
     ret_dict = extract_k16(model, args.device, random_masks=False)
 
-    PCA_path_tokens_seg(ret_dict)
+    #PCA_path_tokens_seg(ret_dict)
     PCA_path_tokens_rgb(ret_dict)
 
 
