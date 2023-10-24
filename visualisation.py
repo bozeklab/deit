@@ -153,7 +153,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
         for i in range(4):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features_rgb[i])
-            fig.savefig(f"output_rgb_{kM}.png")
+            fig.savefig(f"output_3_rgb_{kM}.png")
 
 
 def PCA_path_tokens_seg(features, patch_size=16):
