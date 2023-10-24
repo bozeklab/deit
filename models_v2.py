@@ -14,7 +14,7 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
 import torch.nn.functional as F
 
-from mask_const import DIVISION_MASKS
+from mask_const import DIVISION_MASKS, DIVISION_OFF
 
 
 class Attention(nn.Module):
@@ -328,13 +328,15 @@ class vit_models(nn.Module):
         x = self.norm(x)
         return x[:, 0]
 
-    def _merge_patches(self, xs_feats, masks):
+    def _merge_patches(self, xs_feats, M):
         B, L, feat_dim = xs_feats[0].shape
-
-        print(masks)
 
         x = torch.zeros(B, self.patch_embed.patch_size[0], self.patch_embed.patch_size[1], feat_dim)
 
+        off = DIVISION_OFF[28][M]
+        for i in range(xs_feats.shape[0]):
+            x[:, off['oxs'][i]:off['oxs'][i] + off['xs'][i],
+            off['oys'][i]:off['oys'][i] + off['ys'][i], ...] = xs_feats[:, i, ...].view(B, off['xs'][i], off['ys'][i], -1)
 
         return x.view(B, self.patch_embed.patch_size[0]*self.patch_embed.patch_size[1], feat_dim)
 
@@ -385,8 +387,8 @@ class vit_models(nn.Module):
                 
                 xs_cls = xs[:, :, 0, :]
                 xs_feats = xs[:, :, 1:, :]
-                xs_feats = xs_feats.transpose(0,1)
-                xs_feats = xs_feats.flatten(1,2)
+                xs_feats = xs_feats.transpose(0, 1)
+                xs_feats = xs_feats.flatten(1, 2)
                 x = torch.cat([xs_cls.mean(dim=0).unsqueeze(1), xs_feats], dim=1)
             else:
                 xs = [subencoder(x) for x in xs]
@@ -394,7 +396,7 @@ class vit_models(nn.Module):
                 xs_cls = torch.stack([x[:, [0], :] for x in xs])
                 xs_feats = [x[:, 1:, :] for x in xs]
                 if keep_token_order:
-                    xs_feats = self._merge_patches(xs_feats, masks)
+                    xs_feats = self._merge_patches(xs_feats,  M=16)
                 x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
         else:
             x = subencoder(x)
