@@ -160,6 +160,22 @@ def evaluate_k16_seq(data_loader, model, device, group_by_class, random_masks, *
     KMs = [[k, 16] for k in range(len(model.blocks)+1)]
     return evaluate(data_loader, model, device, KMs=KMs, seq=True, group_by_class=group_by_class, random_masks=random_masks)
 
+def evaluate_km_ood(data_loader, model, device, group_by_class, random_masks, *args, **kwargs):
+    from mask_const import division_masks_from_spec
+    spec = {
+        20: {"xs": [3, 3, 2, 3, 3], "ys": [4,3,3,4]},
+        25: {"xs": [3, 3, 2, 3, 3], "ys": [3, 3, 2, 3, 3]},
+        30: {"xs": [3, 2, 2, 2, 2, 3], "ys": [3, 3, 2, 3, 3]},
+        36: {"xs": [3, 2, 2, 2, 2, 3], "ys": [3, 2, 2, 2, 2, 3]},
+        42: {"xs": [2,2,2,2,2,2,2], "ys": [3, 2, 2, 2, 2, 3]},
+        49: {"xs": [2,2,2,2,2,2,2], "ys": [2,2,2,2,2,2,2]},
+    }
+    old = DIVISION_MASKS[14]
+    DIVISION_MASKS[14] = division_masks_from_spec(spec)
+    ret = evaluate_km(data_loader, model, device, group_by_class, random_masks, *args, **kwargs)
+    DIVISION_MASKS[14] = old
+    return ret
+
 def extract_k16(data_loader, model, device, random_masks, *args, **kwargs):
     KMs = [[k, 16] for k in range(len(model.blocks)+1)]
     return extract(data_loader, model, device, KMs=KMs, random_masks=random_masks)
