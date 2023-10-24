@@ -334,7 +334,7 @@ class vit_models(nn.Module):
         x = torch.zeros(B, self.patch_embed.patch_size[0], self.patch_embed.patch_size[1], feat_dim)
 
         for mask in masks:
-            mask = mask.unsqueeze(0).repeat(B, 1, 1)
+            mask = torch.tensor(mask).unsqueeze(0).repeat(B, 1, 1)
             print(x[mask].shape)
 
         return x.view(B, self.patch_embed.patch_size[0]*self.patch_embed.patch_size[1], feat_dim)
