@@ -103,11 +103,13 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
     return ret
 
 
-def PCA_path_tokens_seg(features):
+def PCA_path_tokens_rgb(features, patch_size=16):
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import minmax_scale
 
     feat_dim = 384
+    patch_h = 448 // patch_size
+    patch_w = 448 // patch_size
 
     images = []
     for i in range(1, 5):
@@ -120,7 +122,60 @@ def PCA_path_tokens_seg(features):
     for kM in features.keys():
         patch_tokens = features[kM]['features'][0].reshape([4, feat_dim, -1])
 
-        total_features = patch_tokens.reshape(4 * 28 * 28, feat_dim) #4(*H*w, 1024)
+        total_features = patch_tokens.reshape(4 * patch_h * patch_w, feat_dim) #4(*H*w, 1024)
+
+        pca = PCA(n_components=3)
+        pca.fit(total_features)
+        pca_features = pca.transform(total_features)
+
+        pca_features_bg = pca_features[:, 0] > 0.35  # from first histogram
+        pca_features_fg = ~pca_features_bg
+
+        pca.fit(total_features[pca_features_fg])
+        pca_features_left = pca.transform(total_features[pca_features_fg])
+
+        for i in range(3):
+            # min_max scaling
+            pca_features_left[:, i] = (pca_features_left[:, i] - pca_features_left[:, i].min()) / (
+                        pca_features_left[:, i].max() - pca_features_left[:, i].min())
+
+        pca_features_rgb = pca_features.copy()
+        # for black background
+        pca_features_rgb[pca_features_bg] = 0
+        # new scaled foreground features
+        pca_features_rgb[pca_features_fg] = pca_features_left
+
+        # reshaping to numpy image format
+        pca_features_rgb = pca_features_rgb.reshape(4, patch_h, patch_w, 3)
+
+        fig = plt.figure(figsize=(10, 10))
+
+        for i in range(4):
+            plt.subplot(2, 2, i + 1)
+            plt.imshow(pca_features_rgb[i])
+            fig.savefig(f"output_rgb_{kM}.png")
+
+
+def PCA_path_tokens_seg(features, patch_size=16):
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import minmax_scale
+
+    feat_dim = 384
+    patch_h = 448 // patch_size
+    patch_w = 448 // patch_size
+
+    images = []
+    for i in range(1, 5):
+        image = Image.open(f"./experiments/data/crane{i}.jpg")
+        image = image.resize((448, 448))
+        image = image.convert("RGB")
+
+        images.append(image)
+
+    for kM in features.keys():
+        patch_tokens = features[kM]['features'][0].reshape([4, feat_dim, -1])
+
+        total_features = patch_tokens.reshape(4 * patch_h * patch_w, feat_dim) #4(*H*w, 1024)
 
         pca = PCA(n_components=3)
         pca.fit(total_features)
@@ -133,7 +188,7 @@ def PCA_path_tokens_seg(features):
 
         for i in range(4):
             plt.subplot(2, 2, i + 1)
-            plt.imshow(pca_features[i * 28 * 28: (i + 1) * 28 * 28, 0].reshape(28, 28))
+            plt.imshow(pca_features[i * patch_h * patch_w: (i + 1) * patch_h * patch_w, 0].reshape(patch_h, patch_w))
 
             fig.savefig(f"output_{kM}.png")
 
@@ -176,6 +231,7 @@ def main(args):
     ret_dict = extract_k16(model, args.device, random_masks=False)
 
     PCA_path_tokens_seg(ret_dict)
+    PCA_path_tokens_rgb(ret_dict)
 
 
 if __name__ == '__main__':
