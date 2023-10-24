@@ -336,11 +336,13 @@ class vit_models(nn.Module):
         off = DIVISION_OFF[28][M]
         print(off)
 
-        for i in range(len(xs_feats)):
-            print(xs_feats[i].shape)
+        for i in range(len(off['oxs'])):
+            for j in range(len(off['oys'])):
 
-            x[:, off['oxs'][i]:off['oxs'][i] + off['xs'][i],
-            off['oys'][i]:off['oys'][i] + off['ys'][i], ...] = xs_feats[:, i, ...].view(B, off['xs'][i], off['ys'][i], -1)
+                ii = i * len(off['oys']) + j
+
+                x[:, off['oxs'][i]:off['oxs'][i] + off['xs'][i],
+                off['oys'][j]:off['oys'][j] + off['ys'][j], ...] = xs_feats[:, ii, ...].view(B, off['xs'][i], off['ys'][j], -1)
 
         return x.view(B, self.patch_embed.patch_size[0]*self.patch_embed.patch_size[1], feat_dim)
 
