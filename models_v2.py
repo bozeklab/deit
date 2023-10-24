@@ -341,6 +341,9 @@ class vit_models(nn.Module):
 
                 ii = i * len(off['oys']) + j
 
+                print(off['oxs'][i])
+                print(off['xs'][i])
+
                 x[:, off['oxs'][i]:off['oxs'][i] + off['xs'][i],
                 off['oys'][j]:off['oys'][j] + off['ys'][j], ...] = xs_feats[:, ii, ...].view(B, off['xs'][i], off['ys'][j], -1)
 
