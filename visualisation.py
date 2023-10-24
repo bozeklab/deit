@@ -97,7 +97,7 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
             else:
                 masks = division_masks[m][0]
             input_tensor = input_tensor.to(device, non_blocking=True)
-            features = model.comp_forward_afterK(input_tensor, K=k, masks=masks).cpu().numpy()
+            features = model.comp_forward_afterK(input_tensor, K=k, masks=masks).cpu().numpy()[:, 1:]
             ret[f"{k}_{m}"]["features"].append(features)
 
     return ret
