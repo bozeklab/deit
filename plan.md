@@ -1,7 +1,9 @@
+## (title) TORE: TOken REcycling method for efficient sequential predictions with Vision Transformers
+
 
 ## Abstract
 
-Active visual exploration is fundamental task for models running on robots, in which the agent has to make decisions where to look next based on partially available current information.  Research led to the design of increasingly accurate methods utilizing emerging properties of self-supervised vision transformer. We propose simple, effective and generic training modification technique called (...) which improves efficiency of sequential decision making algorithms. We show that the resulting training policy is stable and doesn't require hyperparameter tuning, it doesn't destroy the emerging properties of self-supervised VITs used for AVE and greately improves accuracy in the low resource regime. Finally we conduct series of experiments investigating the effect of (...) modification on representations produced by different models.
+When running sequential decision making algorithms, it's often necesary to sequentialy query a model with increasing amount of available information. An example is Active Visual Exploration (AVE), which is an environment exploration problem based on increasing number of visual ques. Research in this area has led to the design of accurate methods utilizing emerging properties of self-supervised Vision Transformers (VITs). AVE is a commonly faced problem by autonomous robots, however existing methods focus on accuracy rather than efficiency. To address this problem we propose simple, effective and general VIT forward pass modification technique called TORE. Training a model with TORE modification doesn't require additional hyperparameter tuning, it doesn't destroy the emerging properties of self-supervised VITs used for AVE, and inference with TORE greately reduces the amount of computation used for sequential model predictions. Finally we conduct series of experiments investigating the effect of TORE on representations produced by different supervised and self-supervised models.
 
 
 ## 3 Filary
