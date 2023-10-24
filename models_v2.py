@@ -394,7 +394,7 @@ class vit_models(nn.Module):
                 xs_cls = torch.stack([x[:, [0], :] for x in xs])
                 xs_feats = [x[:, 1:, :] for x in xs]
                 if keep_token_order:
-                    xs_feats = self._merge_patches(self, xs_feats, masks)
+                    xs_feats = self._merge_patches(xs_feats, masks)
                 x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
         else:
             x = subencoder(x)
