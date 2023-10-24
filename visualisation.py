@@ -97,13 +97,13 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
             else:
                 masks = division_masks[m][0]
             input_tensor = input_tensor.to(device, non_blocking=True)
-            features = model.comp_forward_afterK_patches(input_tensor, K=k, masks=masks).cpu().numpy()
+            features = model.comp_forward_afterK(input_tensor, K=k, masks=masks).cpu().numpy()
             ret[f"{k}_{m}"]["features"].append(features)
 
     return ret
 
 
-def PCA_path_tokens(features):
+def PCA_path_tokens_seg(features):
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import minmax_scale
 
@@ -175,8 +175,7 @@ def main(args):
 
     ret_dict = extract_k16(model, args.device, random_masks=False)
 
-
-    PCA_path_tokens(ret_dict)
+    PCA_path_tokens_seg(ret_dict)
 
 
 if __name__ == '__main__':

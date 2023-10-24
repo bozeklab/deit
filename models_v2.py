@@ -353,13 +353,12 @@ class vit_models(nn.Module):
                 x = blk(x)
             
             x = self.norm(x)
-            ret.append(x[:, 0])
+            ret.append(x)
         return torch.stack(ret)
 
     def comp_forward_afterK(self, x, K, masks):
         B = x.shape[0]
         x = self.prepare_tokens(x)
-
 
         def subencoder(x):
             for blk in self.blocks[:K]:
@@ -391,50 +390,16 @@ class vit_models(nn.Module):
             x = blk(x)
 
         x = self.norm(x)
-        return x[:, 0]
-
-    def comp_forward_afterK_patches(self, x, K, masks):
-        B = x.shape[0]
-        x = self.prepare_tokens(x)
-
-        def subencoder(x):
-            for blk in self.blocks[:K]:
-                x = blk(x)
-            return x
-
-        if K > 0 and masks is not None:
-            xs = self.split_input(x, masks)
-
-            if all(x.shape[1] == xs[0].shape[1] for x in xs):
-                xs = subencoder(torch.cat(xs, dim=0))
-                xs = xs.reshape(xs.shape[0] // B, B, *xs.shape[1:])
-
-                xs_cls = xs[:, :, 0, :]
-                xs_feats = xs[:, :, 1:, :]
-                xs_feats = xs_feats.transpose(0, 1)
-                xs_feats = xs_feats.flatten(1, 2)
-                x = torch.cat([xs_cls.mean(dim=0).unsqueeze(1), xs_feats], dim=1)
-            else:
-                xs = [subencoder(x) for x in xs]
-
-                xs_cls = torch.stack([x[:, [0], :] for x in xs])
-                xs_feats = [x[:, 1:, :] for x in xs]
-                x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
-        else:
-            x = subencoder(x)
-
-        for blk in self.blocks[K:]:
-            x = blk(x)
-
-        x = self.norm(x)
-        return x[:, 1:]
-
+        return x
 
     def forward(self, x, K=0, masks=None, seq=False, cls_only=False):
         if seq:
             x = self.comp_seq(x, K, masks)
+            x = x[:, :, 0]
+
         else:
             x = self.comp_forward_afterK(x, K, masks)
+            x = x[:, 0]
         
         if cls_only:
             return x
