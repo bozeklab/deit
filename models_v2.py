@@ -328,21 +328,13 @@ class vit_models(nn.Module):
         x = self.norm(x)
         return x[:, 0]
 
-    def _merge_patches(self, xs_feats, M):
+    def _merge_patches(self, xs_feats, masks):
         B, L, feat_dim = xs_feats[0].shape
 
         x = torch.zeros(B, self.patch_embed.patch_size[0], self.patch_embed.patch_size[1], feat_dim)
 
-        off = DIVISION_OFF[28][M]
-
-        for i in range(len(off['oxs'])):
-            for j in range(len(off['oys'])):
-
-                ii = i * len(off['oys']) + j
-                print(off['xs'][i], off['ys'][j])
-                f = xs_feats[:, ii].view(B, off['xs'][i], off['ys'][j], -1)
-
-                x[:, off['oxs'][i], off['oys'][j], ...] = f
+        print(len(masks))
+        print(masks[0])
 
         return x.view(B, self.patch_embed.patch_size[0]*self.patch_embed.patch_size[1], feat_dim)
 
@@ -402,7 +394,7 @@ class vit_models(nn.Module):
                 xs_cls = torch.stack([x[:, [0], :] for x in xs])
                 xs_feats = [x[:, 1:, :] for x in xs]
                 if keep_token_order:
-                    xs_feats = self._merge_patches(xs_feats,  M=16)
+                    xs_feats = self._merge_patches(xs_feats, masks)
                 x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
         else:
             x = subencoder(x)
