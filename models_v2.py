@@ -331,7 +331,7 @@ class vit_models(nn.Module):
     def _merge_patches(self, xs_feats, masks):
         B, L, feat_dim = xs_feats[0].shape
 
-        x = torch.zeros(B, self.patch_embed.patch_size[0], self.patch_embed.patch_size[1], feat_dim)
+        x = torch.zeros(B, self.patch_embed.grid_size[0], self.patch_embed.grid_size[1], feat_dim)
 
         for mask in masks:
             mask = torch.tensor(mask).unsqueeze(0).repeat(B, 1, 1)
