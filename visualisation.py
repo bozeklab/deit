@@ -97,7 +97,7 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
             else:
                 masks = division_masks[m][0]
             input_tensor = input_tensor.to(device, non_blocking=True)
-            features = model.comp_forward_afterK(input_tensor, K=k, masks=masks).cpu().numpy()[:, 1:]
+            features = model.comp_forward_afterK(input_tensor, K=k, masks=masks, keep_token_order=True).cpu().numpy()[:, 1:]
             ret[f"{k}_{m}"]["features"].append(features)
 
     return ret
@@ -128,7 +128,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
         pca.fit(total_features)
         pca_features = pca.transform(total_features)
 
-        pca_features_bg = pca_features[:, 0] < 0.35  # from first histogram
+        pca_features_bg = pca_features[:, 0] < 0.45  # from first histogram
         pca_features_fg = ~pca_features_bg
 
         pca.fit(total_features[pca_features_fg])

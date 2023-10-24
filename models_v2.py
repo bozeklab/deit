@@ -328,6 +328,17 @@ class vit_models(nn.Module):
         x = self.norm(x)
         return x[:, 0]
 
+    def _merge_patches(self, xs_feats, masks):
+        B, L, feat_dim = xs_feats[0].shape
+
+        print(masks)
+
+        x = torch.zeros(B, self.patch_embed.patch_size[0], self.patch_embed.patch_size[1], feat_dim)
+
+
+        return x.view(B, self.patch_embed.patch_size[0]*self.patch_embed.patch_size[1], feat_dim)
+
+
     def comp_seq(self, x, K, masks):
         assert masks is not None
         x = self.prepare_tokens(x)
@@ -341,12 +352,12 @@ class vit_models(nn.Module):
         xs = [subencoder(x) for x in xs]
         random.shuffle(xs)
 
-        cls_mean = torch.zeros_like(xs[0][:,[0],:])
+        cls_mean = torch.zeros_like(xs[0][:, [0], :])
         xs_feats = []
         ret = []
         for i, x in enumerate(xs):
-            cls_mean = cls_mean * i/(i+1) + x[:,[0], :] / (i+1)
-            xs_feats.append(x[:,1:,:])
+            cls_mean = cls_mean * i/(i+1) + x[:, [0], :] / (i+1)
+            xs_feats.append(x[:, 1:, :])
             x = torch.cat([cls_mean] + xs_feats, dim=1)
             
             for blk in self.blocks[K:]:
@@ -356,7 +367,7 @@ class vit_models(nn.Module):
             ret.append(x)
         return torch.stack(ret)
 
-    def comp_forward_afterK(self, x, K, masks):
+    def comp_forward_afterK(self, x, K, masks, keep_token_order=False):
         B = x.shape[0]
         x = self.prepare_tokens(x)
 
@@ -382,6 +393,8 @@ class vit_models(nn.Module):
 
                 xs_cls = torch.stack([x[:, [0], :] for x in xs])
                 xs_feats = [x[:, 1:, :] for x in xs]
+                if keep_token_order:
+                    xs_feats = self._merge_patches(self, xs_feats, masks)
                 x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
         else:
             x = subencoder(x)
