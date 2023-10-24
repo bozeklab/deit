@@ -334,7 +334,6 @@ class vit_models(nn.Module):
         x = torch.zeros(B, self.patch_embed.patch_size[0], self.patch_embed.patch_size[1], feat_dim)
 
         off = DIVISION_OFF[28][M]
-        print(off)
 
         for i in range(len(off['oxs'])):
             for j in range(len(off['oys'])):
@@ -343,11 +342,7 @@ class vit_models(nn.Module):
 
                 f = xs_feats[:, ii, ...].view(B, off['xs'][i], off['ys'][j], -1)
 
-                print('!!')
-                print(f.shape)
-
-                x[:, off['oxs'][i]:off['oxs'][i] + off['xs'][i],
-                off['oys'][j]:off['oys'][j] + off['ys'][j], ...] =
+                x[:, off['oxs'][i], off['oys'][j], ...] = f
 
         return x.view(B, self.patch_embed.patch_size[0]*self.patch_embed.patch_size[1], feat_dim)
 
