@@ -328,7 +328,7 @@ class vit_models(nn.Module):
         x = self.norm(x)
         return x[:, 0]
 
-    def _merge_patches(self, xs_feats, masks, device):
+    def _merge_patches(self, xs_feats, masks):
         B, _, feat_dim = xs_feats[0].shape
 
         x = torch.zeros(B, self.patch_embed.grid_size[0], self.patch_embed.grid_size[1], feat_dim)
