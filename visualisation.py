@@ -112,7 +112,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
     patch_w = 448 // patch_size
 
     images = []
-    for i in range(1, 5):
+    for i in range(1, 4):
         image = Image.open(f"./experiments/data/crane{i}.jpg")
         image = image.resize((448, 448))
         image = image.convert("RGB")
@@ -150,7 +150,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
 
         fig = plt.figure(figsize=(10, 10))
 
-        for i in range(4):
+        for i in range(3):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features_rgb[i])
             fig.savefig(f"output_3_rgb_{kM}.png")
