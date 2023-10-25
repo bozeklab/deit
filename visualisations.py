@@ -13,6 +13,7 @@ from timm.utils import accuracy
 import numpy as np
 import models
 import models_v2
+from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
 import cv2
 from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS
@@ -47,14 +48,6 @@ def get_args_parser():
     parser.add_argument('--checkpoint', default=None, help="path to model checkpoint")
     parser.add_argument('--device', default="cuda", type=str)
 
-    parser.add_argument('--num_workers', default=10, type=int)
-    parser.add_argument('--pin-mem', action='store_true',
-                        help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
-    parser.add_argument('--distributed', action='store_true', default=False, help='Enabling distributed training')
-    parser.add_argument('--world_size', default=1, type=int,
-                        help='number of distributed processes')
-    parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
-
     parser.add_argument('--evaluate', nargs='*', default=[])
     parser.add_argument('--extract', nargs='*', default=[])
     parser.add_argument('--count_flops', action="store_true")
@@ -79,7 +72,7 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
     images = []
     transform = TT.Compose([TT.ToTensor(), TT.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD)])
     for i in range(1, 5):
-        image = Image.open(f"./experiments/data/crane{i}.jpg")
+        image = Image.open(f"experiments/crane/crane{i}.jpg")
         image = image.resize((448, 448))
         image = image.convert("RGB")
 
@@ -105,7 +98,6 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
 
 def PCA_path_tokens_rgb(features, patch_size=16):
     from sklearn.decomposition import PCA
-    from sklearn.preprocessing import minmax_scale
 
     feat_dim = 384
     patch_h = 448 // patch_size
@@ -113,7 +105,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
 
     images = []
     for i in range(1, 4):
-        image = Image.open(f"./experiments/data/crane{i}.jpg")
+        image = Image.open(f"experiments/crane/crane{i}.jpg")
         image = image.resize((448, 448))
         image = image.convert("RGB")
 
@@ -150,23 +142,20 @@ def PCA_path_tokens_rgb(features, patch_size=16):
 
         fig = plt.figure(figsize=(10, 10))
 
-        for i in range(3):
+        for i in range(4):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features_rgb[i])
             fig.savefig(f"output_3_rgb_{kM}.png")
 
 
-def PCA_path_tokens_seg(features, patch_size=16):
-    from sklearn.decomposition import PCA
-    from sklearn.preprocessing import minmax_scale
-
+def PCA_path_tokens_foreground_seg(features, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
     patch_w = 448 // patch_size
 
     images = []
     for i in range(1, 4):
-        image = Image.open(f"./experiments/data/crane{i}.jpg")
+        image = Image.open(f"experiments/crane/crane{i}.jpg")
         image = image.resize((448, 448))
         image = image.convert("RGB")
 
@@ -193,7 +182,7 @@ def PCA_path_tokens_seg(features, patch_size=16):
             fig.savefig(f"output_3_{kM}.png")
 
 
-def extract_k16(model, device, random_masks, *args, **kwargs):
+def extract_patches_k16(model, device, random_masks, *args, **kwargs):
     KMs = [[k, 16] for k in range(len(model.blocks) + 1)]
     return extract(model, device, KMs=KMs, random_masks=random_masks)
 
@@ -228,7 +217,7 @@ def main_setup(args):
 def main(args):
     model = main_setup(args)
 
-    ret_dict = extract_k16(model, args.device, random_masks=False)
+    ret_dict = extract_patches_k16(model, args.device, random_masks=False)
 
     #PCA_path_tokens_seg(ret_dict)
     PCA_path_tokens_rgb(ret_dict)

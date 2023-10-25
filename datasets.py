@@ -6,9 +6,27 @@ import json
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import ImageFolder, default_loader
 from torchvision.datasets import StanfordCars, Flowers102
+from torch.utils.data import Dataset
 
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data import create_transform
+from PIL import Image
+
+
+class FewExamplesDataset(Dataset):
+    def __init__(self, root, train=True, transform=None):
+        self.image_folder = ImageFolder(root, transform=transform)
+        self.image_paths = os.path.join(root, f'{"train" if train else "test"}')
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx):
+        img_path, _ = self.image_paths[idx]
+        orig_image = Image.open(img_path)
+        if self.image_folder.transform is not None:
+            orig_image = self.image_folder.transform(orig_image)
+        return orig_image, orig_image
 
 
 class INatDataset(ImageFolder):
@@ -94,6 +112,14 @@ def build_dataset(is_train, args):
     elif args.data_set == 'FLOWERS':
         dataset = Flowers102(args.data_path, split="train" if is_train else "test", transform=transform)
         nb_classes = 102
+    elif args.data_set == 'FEW':
+        transform = transforms.Compose([
+            transforms.Resize((args.input_size, args.input_size)),  # Adjust the image size as needed
+            transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
+            transforms.ToTensor()
+        ])
+        dataset = FewExamplesDataset(args.data_set, split="train" if is_train else "test", transform=transform)
+        nb_classes = -1
 
     return dataset, nb_classes
 

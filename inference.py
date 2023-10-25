@@ -109,7 +109,6 @@ def evaluate(data_loader, model, device, KMs, random_masks, seq: bool=False, gro
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
-
 @torch.no_grad()
 def extract(data_loader, model, device, KMs, random_masks, seq: bool=False):
     # switch to evaluation mode
