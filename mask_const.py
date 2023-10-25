@@ -47,17 +47,6 @@ def division_ids_from_spec(specs):
     return ret
 
 
-def divisions_offsets_from_spec(specs):
-    partial_sums = lambda input_list: reduce(lambda acc, x: acc + [acc[-1] + x], input_list, [0])[1:]
-
-    ret = {}
-    for k, v in specs.items():
-        oxs = partial_sums([0] + v['xs'][:-1])
-        oys = partial_sums([0] + v['ys'][:-1])
-        v_rot = {"oxs": oys, "oys": oxs, "xs": v['ys'], "ys": v['xs']}
-        ret[k] = v_rot
-    return ret
-
 DIVISION_SPECS_14_14 = {
     1: {"xs": [14], "ys": [14]},
     2: {"xs": [14], "ys": [7, 7]},
@@ -101,11 +90,6 @@ DIVISION_IDS = {
     28: division_ids_from_spec(DIVISION_SPECS_28_28)
 }
 
-DIVISION_OFF = {
-    12: divisions_offsets_from_spec(DIVISION_SPECS_12_12),
-    14: divisions_offsets_from_spec(DIVISION_SPECS_14_14),
-    28: divisions_offsets_from_spec(DIVISION_SPECS_28_28)
-}
 
 import random
 def sample_masks(division_masks, M):
@@ -118,7 +102,3 @@ def get_division_masks_for_model(model):
     assert model.patch_embed.patch_size[0] == model.patch_embed.patch_size[1]
     division_masks = DIVISION_MASKS[model.patch_embed.img_size[0] // model.patch_embed.patch_size[0]]
     return division_masks
-
-
-if __name__ == '__main__':
-    print(DIVISION_OFF[14])
