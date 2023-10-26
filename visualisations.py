@@ -92,7 +92,7 @@ def extract(model, device, KMs, random_masks, dataset, seq: bool=False):
     return ret
 
 
-def PCA_path_tokens_rgb(features, dataset, patch_size=16):
+def PCA_path_tokens_rgb(features, dataset, args, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
     patch_w = 448 // patch_size
@@ -140,7 +140,7 @@ def PCA_path_tokens_rgb(features, dataset, patch_size=16):
             plt.imshow(pca_features_rgb[i])
             fig.savefig(f"output_3_rgb_{kM}.png")
 
-def PCA_path_tokens_foreground_seg(features, dataset, patch_size=16):
+def PCA_path_tokens_foreground_seg(features, dataset, args, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
     patch_w = 448 // patch_size
@@ -201,6 +201,7 @@ def main_setup(args):
         msg = model.load_state_dict(checkpoint['model'])
         print("Loaded checkpoint: ", msg)
 
+    args.data_set = 'FEW'
     dataset = build_dataset(True, args)
 
     return model, dataset
