@@ -82,12 +82,20 @@ class PatchedImageFolder(ImageFolder):
         return classes, class_to_idx
 
 def build_dataset(is_train, args):
-    transform = build_transform(is_train, args)
-
+    if args.data_set == 'FEW':
+        transform = transforms.Compose([
+            transforms.Resize((args.input_size, args.input_size)),  # Adjust the image size as needed
+            transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
+            transforms.ToTensor()
+        ])
+        dataset = FewExamplesDataset(args.data_set, split="train" if is_train else "test", transform=transform)
+        nb_classes = -1
+    else:
+        transform = build_transform(is_train, args)
     if args.data_set == 'CIFAR100':
         dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform)
         nb_classes = 100
-    if args.data_set == 'CIFAR10':
+    elif args.data_set == 'CIFAR10':
         dataset = datasets.CIFAR10(args.data_path, train=is_train, transform=transform)
         nb_classes = 10
     elif args.data_set == 'IMNET2':
@@ -112,14 +120,6 @@ def build_dataset(is_train, args):
     elif args.data_set == 'FLOWERS':
         dataset = Flowers102(args.data_path, split="train" if is_train else "test", transform=transform)
         nb_classes = 102
-    elif args.data_set == 'FEW':
-        transform = transforms.Compose([
-            transforms.Resize((args.input_size, args.input_size)),  # Adjust the image size as needed
-            transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
-            transforms.ToTensor()
-        ])
-        dataset = FewExamplesDataset(args.data_set, split="train" if is_train else "test", transform=transform)
-        nb_classes = -1
 
     return dataset, nb_classes
 

@@ -60,7 +60,7 @@ def get_args_parser():
 
 
 @torch.no_grad()
-def extract(model, device, KMs, random_masks, dataset, seq: bool=False):
+def extract(model, device, KMs, random_masks, dataset):
     # switch to evaluation mode
     model.eval()
     division_masks = get_division_masks_for_model(model)
@@ -203,12 +203,7 @@ def main_setup(args):
         print("Loaded checkpoint: ", msg)
 
     args.data_set = 'FEW'
-    transform = transforms.Compose([
-        transforms.Resize((args.input_size, args.input_size)),  # Adjust the image size as needed
-        transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
-        transforms.ToTensor()
-    ])
-    dataset = FewExamplesDataset(args.data_path, "train", transform)
+    dataset = build_dataset(is_train=True, args=args)
 
     return model, dataset
 
