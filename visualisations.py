@@ -216,7 +216,7 @@ def main_setup(args):
 def main(args):
     model, ds = main_setup(args)
 
-    ret_dict = extract_patches_k16(model, args.device, random_masks=False, dataset)
+    ret_dict = extract_patches_k16(model, args.device, random_masks=False, dataset=dataset)
 
     #PCA_path_tokens_seg(ret_dict)
     PCA_path_tokens_rgb(ret_dict, dataset=ds)
