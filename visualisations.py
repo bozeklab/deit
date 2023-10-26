@@ -7,6 +7,7 @@ from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.models import create_model
 from pathlib import Path
 from PIL import Image
+from torchvision import transforms
 from tqdm import tqdm
 import utils
 from timm.utils import accuracy
@@ -202,7 +203,12 @@ def main_setup(args):
         print("Loaded checkpoint: ", msg)
 
     args.data_set = 'FEW'
-    dataset = build_dataset(True, args)
+    transform = transforms.Compose([
+        transforms.Resize((args.input_size, args.input_size)),  # Adjust the image size as needed
+        transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
+        transforms.ToTensor()
+    ])
+    dataset = FewExamplesDataset(args.data_set, split="train" if is_train else "test", transform=transform)
 
     return model, dataset
 
