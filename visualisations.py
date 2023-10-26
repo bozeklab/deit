@@ -175,7 +175,7 @@ def PCA_path_tokens_foreground_seg(features, dataset, args, patch_size=16):
 
 def extract_patches_k16(model, device, random_masks, dataset, *args, **kwargs):
     KMs = [[k, 16] for k in range(len(model.blocks) + 1)]
-    return extract(model, device, KMs=KMs, random_masks=random_masks)
+    return extract(model, device, KMs=KMs, random_masks=random_masks, dataset=dataset)
 
 
 def main_setup(args):
@@ -216,7 +216,7 @@ def main_setup(args):
 def main(args):
     model, ds = main_setup(args)
 
-    ret_dict = extract_patches_k16(model, args.device, random_masks=False)
+    ret_dict = extract_patches_k16(model, args.device, random_masks=False, dataset)
 
     #PCA_path_tokens_seg(ret_dict)
     PCA_path_tokens_rgb(ret_dict, dataset=ds)
