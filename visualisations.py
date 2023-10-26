@@ -16,6 +16,8 @@ import models_v2
 from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
 import cv2
+
+from datasets import FewExamplesDataset, build_dataset
 from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS
 from functools import partial
 from fvcore.nn import FlopCountAnalysis
@@ -57,7 +59,7 @@ def get_args_parser():
 
 
 @torch.no_grad()
-def extract(model, device, KMs, random_masks, seq: bool=False):
+def extract(model, device, KMs, random_masks, dataset, seq: bool=False):
     # switch to evaluation mode
     model.eval()
     division_masks = get_division_masks_for_model(model)
@@ -68,13 +70,9 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
     }
 
     images = []
-    transform = TT.Compose([TT.ToTensor(), TT.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD)])
-    for i in range(1, 5):
-        image = Image.open(f"experiments/crane/crane{i}.jpg")
-        image = image.resize((448, 448))
-        image = image.convert("RGB")
-
-        images.append(transform(image))
+    for i in range(len(dataset)):
+        _, im = dataset[i]
+        images.append(im)
 
     input_tensor = torch.stack(images)
 
@@ -94,19 +92,17 @@ def extract(model, device, KMs, random_masks, seq: bool=False):
     return ret
 
 
-def PCA_path_tokens_rgb(features, patch_size=16):
-
+def PCA_path_tokens_rgb(features, dataset, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
     patch_w = 448 // patch_size
 
     images = []
-    for i in range(1, 4):
-        image = Image.open(f"experiments/crane/crane{i}.jpg")
-        image = image.resize((448, 448))
-        image = image.convert("RGB")
-
-        images.append(image)
+    orig_images = []
+    for i in range(len(dataset)):
+        orig_im, im = dataset[i]
+        images.append(im)
+        orig_images.append(orig_im)
 
     for kM in features.keys():
         patch_tokens = features[kM]['features'][0].reshape([4, feat_dim, -1])
@@ -139,24 +135,22 @@ def PCA_path_tokens_rgb(features, patch_size=16):
 
         fig = plt.figure(figsize=(10, 10))
 
-        for i in range(4):
+        for i in range(pca_features_rgb.shape[0]):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features_rgb[i])
             fig.savefig(f"output_3_rgb_{kM}.png")
 
-
-def PCA_path_tokens_foreground_seg(features, patch_size=16):
+def PCA_path_tokens_foreground_seg(features, dataset, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
     patch_w = 448 // patch_size
 
     images = []
-    for i in range(1, 4):
-        image = Image.open(f"experiments/crane/crane{i}.jpg")
-        image = image.resize((448, 448))
-        image = image.convert("RGB")
-
-        images.append(image)
+    orig_images = []
+    for i in range(len(dataset)):
+        orig_im, im = dataset[i]
+        images.append(im)
+        orig_images.append(orig_im)
 
     for kM in features.keys():
         patch_tokens = features[kM]['features'][0].reshape([4, feat_dim, -1])
@@ -172,14 +166,13 @@ def PCA_path_tokens_foreground_seg(features, patch_size=16):
 
         fig = plt.figure(figsize=(10, 10))
 
-        for i in range(3):
+        for i in range(pca_features.shape[0]):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features[i * patch_h * patch_w: (i + 1) * patch_h * patch_w, 0].reshape(patch_h, patch_w))
-
             fig.savefig(f"output_3_{kM}.png")
 
 
-def extract_patches_k16(model, device, random_masks, *args, **kwargs):
+def extract_patches_k16(model, device, random_masks, dataset, *args, **kwargs):
     KMs = [[k, 16] for k in range(len(model.blocks) + 1)]
     return extract(model, device, KMs=KMs, random_masks=random_masks)
 
@@ -208,16 +201,18 @@ def main_setup(args):
         msg = model.load_state_dict(checkpoint['model'])
         print("Loaded checkpoint: ", msg)
 
-    return model
+    dataset = build_dataset(True, args)
+
+    return model, dataset
 
 
 def main(args):
-    model = main_setup(args)
+    model, ds = main_setup(args)
 
     ret_dict = extract_patches_k16(model, args.device, random_masks=False)
 
     #PCA_path_tokens_seg(ret_dict)
-    PCA_path_tokens_rgb(ret_dict)
+    PCA_path_tokens_rgb(ret_dict, dataset=ds)
 
 
 if __name__ == '__main__':

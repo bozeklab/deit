@@ -25,8 +25,8 @@ class FewExamplesDataset(Dataset):
         img_path, _ = self.image_paths[idx]
         orig_image = Image.open(img_path)
         if self.image_folder.transform is not None:
-            orig_image = self.image_folder.transform(orig_image)
-        return orig_image, orig_image
+            image = self.image_folder.transform(orig_image)
+        return orig_image, image
 
 
 class INatDataset(ImageFolder):
