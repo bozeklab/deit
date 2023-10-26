@@ -88,7 +88,7 @@ def build_dataset(is_train, args):
             transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
             transforms.ToTensor()
         ])
-        dataset = FewExamplesDataset(args.data_set, split="train" if is_train else "test", transform=transform)
+        dataset = FewExamplesDataset(args.data_set, train=is_train, transform=transform)
         nb_classes = -1
     else:
         transform = build_transform(is_train, args)
