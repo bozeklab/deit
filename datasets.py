@@ -5,7 +5,7 @@ import json
 
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import ImageFolder, default_loader
-from torchvision.datasets import StanfordCars, Flowers102
+from torchvision.datasets import StanfordCars, Flowers102, VisionDataset
 from torch.utils.data import Dataset
 
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
@@ -13,16 +13,19 @@ from timm.data import create_transform
 from PIL import Image
 
 
-class FewExamplesDataset(Dataset):
-    def __init__(self, root, train=True, transform=None):
+class FewExamplesDataset(VisionDataset):
+    def __init__(self, root, transform=None, train=True):
+        super(VisionDataset, self).__init__(root, transform=None)
         self.image_folder = ImageFolder(root, transform=transform)
         self.image_paths = os.path.join(root, f'{"train" if train else "test"}')
 
+        self.file_list = [filename for filename in os.listdir(self.root) if filename.endswith('.jpg')]
+
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.file_list)
 
     def __getitem__(self, idx):
-        img_path, _ = self.image_paths[idx]
+        img_path, _ = self.file_list[idx]
         orig_image = Image.open(img_path)
         if self.image_folder.transform is not None:
             image = self.image_folder.transform(orig_image)
