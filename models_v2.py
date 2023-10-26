@@ -14,8 +14,6 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
 import torch.nn.functional as F
 
-from mask_const import DIVISION_MASKS, DIVISION_OFF
-
 
 class Attention(nn.Module):
     # taken from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
