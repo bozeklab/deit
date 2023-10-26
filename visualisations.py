@@ -208,7 +208,7 @@ def main_setup(args):
         transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
         transforms.ToTensor()
     ])
-    dataset = FewExamplesDataset(args.data_set, "train", transform)
+    dataset = FewExamplesDataset(args.data_path, "train", transform)
 
     return model, dataset
 
