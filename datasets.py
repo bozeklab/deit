@@ -28,6 +28,7 @@ class FewExamplesDataset(VisionDataset):
         img_path = os.path.join(self.image_paths, self.file_list[idx])
         orig_image = Image.open(img_path)
         tensor_image = self.to_tensor(orig_image)
+        print(tensor_image)
 
         if self.transform is not None:
             image = self.transform(orig_image)
