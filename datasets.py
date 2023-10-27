@@ -25,6 +25,8 @@ class FewExamplesDataset(VisionDataset):
         return len(self.file_list)
 
     def __getitem__(self, idx):
+        print(self.file_list)
+
         img_path = os.path.join(self.image_paths, self.file_list[idx])
         orig_image = Image.open(img_path)
         tensor_image = self.to_tensor(orig_image)
