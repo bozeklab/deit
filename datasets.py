@@ -25,6 +25,7 @@ class FewExamplesDataset(VisionDataset):
         return len(self.file_list)
 
     def __getitem__(self, idx):
+        print('!!!')
         print(self.file_list)
 
         img_path = os.path.join(self.image_paths, self.file_list[idx])
