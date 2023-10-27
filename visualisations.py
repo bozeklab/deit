@@ -92,7 +92,7 @@ def extract(data_loader, model, device, KMs, random_masks):
 
 def PCA_path_tokens_rgb(features):
     for kM in features.keys():
-        bsz, L, feat_dim = features[kM]['features'][0].shape[0]
+        bsz, L, feat_dim = features[kM]['features'][0].shape
         patch_tokens = features[kM]['features'][0].reshape([bsz, feat_dim, -1])
 
         patch_h = math.isqrt(L)
