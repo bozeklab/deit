@@ -69,7 +69,6 @@ def extract(data_loader, model, device, KMs, random_masks):
         f"{k}_{m}": {"features": [], "targets": []}
         for k, m in KMs
     }
-    data_it = iter(data_loader)
     input_tensor, _ = next(iter(data_loader))
 
     # We need to reorder the images to [batch, channel, width, height]
@@ -204,8 +203,6 @@ def main_setup(args):
     data_loader = torch.utils.data.DataLoader(
         dataset, sampler=sampler,
         batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
         drop_last=False
     )
 
