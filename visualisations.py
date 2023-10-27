@@ -96,7 +96,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
     for kM in features.keys():
         bsz = features[kM]['features'][0].shape[0]
         print('!!!')
-        print(features[kM]['features'][0])
+        print(features[kM]['features'][0].shape)
         patch_tokens = features[kM]['features'][0].reshape([bsz, feat_dim, -1])
 
         total_features = patch_tokens.reshape(bsz * patch_h * patch_w, feat_dim) #4(*H*w, 1024)
