@@ -162,37 +162,3 @@ def build_transform(is_train, args):
     t.append(transforms.ToTensor())
     t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
     return transforms.Compose(t)
-
-
-def main():
-    # Define the root directory where your dataset is stored
-    root_dir = '/Users/piotrwojcik/PycharmProjects/deit/experiments/crane'  # Replace with the actual path
-
-    # Define your data transforms (if needed)
-    data_transform = transforms.Compose([
-        transforms.Resize((448, 448)),  # Example: Resize the images
-        transforms.ToTensor(),
-    ])
-
-    # Create a FewExamplesDataset instance for the training set
-    train_dataset = FewExamplesDataset(root_dir, transform=data_transform, train=True)
-
-    # Create a DataLoader for the training set
-    batch_size = 4
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
-    # Iterate through the dataset using the DataLoader
-    for batch in train_loader:
-        tensor_images, transformed_images = batch
-
-        # Process your data here
-        # tensor_images contains the original images as tensors
-        # transformed_images contains the transformed images as tensors
-
-        # For example, you can print the shapes of the tensors
-        print("Original image shapes:", tensor_images.shape)
-        print("Transformed image shapes:", transformed_images.shape)
-
-
-if __name__ == "__main__":
-    main()
