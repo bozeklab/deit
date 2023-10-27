@@ -29,6 +29,9 @@ class FewExamplesDataset(VisionDataset):
         orig_image = Image.open(img_path)
         tensor_image = self.to_tensor(orig_image)
 
+        print('!!!')
+        print(tensor_image)
+
         if self.transform is not None:
             image = self.transform(orig_image)
         else:
