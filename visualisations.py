@@ -1,3 +1,5 @@
+import math
+
 import torch
 import argparse
 import json
@@ -88,18 +90,14 @@ def extract(data_loader, model, device, KMs, random_masks):
     return ret
 
 
-def PCA_path_tokens_rgb(features, patch_size=16):
-    feat_dim = 384
-    patch_h = 448 // patch_size
-    patch_w = 448 // patch_size
-
+def PCA_path_tokens_rgb(features):
     for kM in features.keys():
-        bsz = features[kM]['features'][0].shape[0]
-        print('!!!')
-        print(features[kM]['features'][0].shape)
+        bsz, L, feat_dim = features[kM]['features'][0].shape[0]
         patch_tokens = features[kM]['features'][0].reshape([bsz, feat_dim, -1])
 
-        total_features = patch_tokens.reshape(bsz * patch_h * patch_w, feat_dim) #4(*H*w, 1024)
+        patch_h = math.isqrt(L)
+
+        total_features = patch_tokens.reshape(bsz * patch_h * patch_h, feat_dim) #4(*H*w, 1024)
 
         pca = PCA(n_components=3)
         pca.fit(total_features)
@@ -123,7 +121,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
         pca_features_rgb[pca_features_fg] = pca_features_left
 
         # reshaping to numpy image format
-        pca_features_rgb = pca_features_rgb.reshape(bsz, patch_h, patch_w, 3)
+        pca_features_rgb = pca_features_rgb.reshape(bsz, patch_h, patch_h, 3)
 
         fig = plt.figure(figsize=(10, 10))
 
