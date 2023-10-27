@@ -94,9 +94,11 @@ def PCA_path_tokens_rgb(features, patch_size=16):
     patch_w = 448 // patch_size
 
     for kM in features.keys():
-        patch_tokens = features[kM]['features'][0].reshape([4, feat_dim, -1])
+        bsz = features.shape[0]
 
-        total_features = patch_tokens.reshape(4 * patch_h * patch_w, feat_dim) #4(*H*w, 1024)
+        patch_tokens = features[kM]['features'][0].reshape([bsz, feat_dim, -1])
+
+        total_features = patch_tokens.reshape(bsz * patch_h * patch_w, feat_dim) #4(*H*w, 1024)
 
         pca = PCA(n_components=3)
         pca.fit(total_features)
@@ -108,7 +110,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
         pca.fit(total_features[pca_features_fg])
         pca_features_left = pca.transform(total_features[pca_features_fg])
 
-        for i in range(4):
+        for i in range(3):
             # min_max scaling
             pca_features_left[:, i] = (pca_features_left[:, i] - pca_features_left[:, i].min()) / (
                         pca_features_left[:, i].max() - pca_features_left[:, i].min())
@@ -120,7 +122,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
         pca_features_rgb[pca_features_fg] = pca_features_left
 
         # reshaping to numpy image format
-        pca_features_rgb = pca_features_rgb.reshape(4, patch_h, patch_w, 3)
+        pca_features_rgb = pca_features_rgb.reshape(bsz, patch_h, patch_w, 3)
 
         fig = plt.figure(figsize=(10, 10))
 
