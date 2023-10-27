@@ -25,13 +25,16 @@ class FewExamplesDataset(VisionDataset):
         return len(self.file_list)
 
     def __getitem__(self, idx):
-        img_path, _ = self.file_list[idx]
+        img_path = os.path.join(self.image_paths, self.file_list[idx])
         orig_image = Image.open(img_path)
-        print(self.to_tensor(orig_image))
+        tensor_image = self.to_tensor(orig_image)
+
         if self.transform is not None:
             image = self.transform(orig_image)
-        return self.to_tensor(orig_image), image
+        else:
+            image = tensor_image
 
+        return tensor_image, image
 
 class INatDataset(ImageFolder):
     def __init__(self, root, train=True, year=2018, transform=None, target_transform=None,
