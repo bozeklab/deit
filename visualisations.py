@@ -184,7 +184,7 @@ def main_setup(args):
         print("Loaded checkpoint: ", msg)
 
     args.data_set = 'FEW'
-    dataset = build_dataset(is_train=True, args=args)
+    dataset, _ = build_dataset(is_train=True, args=args)
     sampler = torch.utils.data.SequentialSampler(dataset)
 
     data_loader = torch.utils.data.DataLoader(

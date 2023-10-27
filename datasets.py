@@ -195,6 +195,11 @@ def main():
     #print("Original image shapes:", tensor_images.shape)
     print(transformed_images)
     print("Transformed image shapes:", transformed_images.shape)
+    _ , transformed_images = next(iter(train_loader))
+
+    _ , transformed_images = next(iter(train_loader))
+
+
 
 
 if __name__ == "__main__":
