@@ -108,7 +108,7 @@ def PCA_path_tokens_rgb(features, patch_size=16):
         pca.fit(total_features[pca_features_fg])
         pca_features_left = pca.transform(total_features[pca_features_fg])
 
-        for i in range(3):
+        for i in range(4):
             # min_max scaling
             pca_features_left[:, i] = (pca_features_left[:, i] - pca_features_left[:, i].min()) / (
                         pca_features_left[:, i].max() - pca_features_left[:, i].min())
