@@ -15,7 +15,7 @@ from PIL import Image
 
 class FewExamplesDataset(VisionDataset):
     def __init__(self, root, transform=None, train=True):
-        super(FewExamplesDataset, self).__init__(root, transform=None)
+        super(FewExamplesDataset, self).__init__(root, transform=transform)
         self.image_paths = os.path.join(root, f'{"train" if train else "test"}')
         self.transform = transform
         self.to_tensor = transforms.ToTensor()
