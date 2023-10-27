@@ -69,9 +69,8 @@ def extract(data_loader, model, device, KMs, random_masks):
         f"{k}_{m}": {"features": [], "targets": []}
         for k, m in KMs
     }
-    data_iter = iter(data_loader)
 
-    _, input_tensor = next(data_iter)
+    _, input_tensor = next(iter(data_loader))
 
     # We need to reorder the images to [batch, channel, width, height]
     # The array of loaded images is [batch, height, width, channel]
