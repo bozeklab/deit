@@ -22,11 +22,12 @@ class FewExamplesDataset(VisionDataset):
         self.file_list = [filename for filename in os.listdir(self.image_paths) if filename.endswith('.jpg')]
 
     def __len__(self):
+        print('!!!')
+        print(self.file_list)
         return len(self.file_list)
 
     def __getitem__(self, idx):
-        print('!!!')
-        print(self.file_list)
+
 
         img_path = os.path.join(self.image_paths, self.file_list[idx])
         orig_image = Image.open(img_path)
