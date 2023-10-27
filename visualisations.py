@@ -87,17 +87,10 @@ def extract(data_loader, model, device, KMs, random_masks):
     return ret
 
 
-def PCA_path_tokens_rgb(features, dataset, args, patch_size=16):
+def PCA_path_tokens_rgb(features, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
     patch_w = 448 // patch_size
-
-    images = []
-    orig_images = []
-    for i in range(len(dataset)):
-        orig_im, im = dataset[i]
-        images.append(im)
-        orig_images.append(orig_im)
 
     for kM in features.keys():
         patch_tokens = features[kM]['features'][0].reshape([4, feat_dim, -1])
@@ -135,17 +128,10 @@ def PCA_path_tokens_rgb(features, dataset, args, patch_size=16):
             plt.imshow(pca_features_rgb[i])
             fig.savefig(f"output_3_rgb_{kM}.png")
 
-def PCA_path_tokens_foreground_seg(features, dataloader, args, patch_size=16):
+def PCA_path_tokens_foreground_seg(features, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
     patch_w = 448 // patch_size
-
-    images = []
-    orig_images = []
-    for i in range(len(dataloader)):
-        orig_im, im = dataloader[i]
-        images.append(im)
-        orig_images.append(orig_im)
 
     for kM in features.keys():
         patch_tokens = features[kM]['features'][0].reshape([4, feat_dim, -1])
@@ -167,9 +153,9 @@ def PCA_path_tokens_foreground_seg(features, dataloader, args, patch_size=16):
             fig.savefig(f"output_3_{kM}.png")
 
 
-def extract_patches_k16(model, device, random_masks, dataset, *args, **kwargs):
+def extract_patches_k16(data_loader, model, device, random_masks, *args, **kwargs):
     KMs = [[k, 16] for k in range(len(model.blocks) + 1)]
-    return extract(model, device, KMs=KMs, random_masks=random_masks, dataset=dataset)
+    return extract(data_loader, model, device, KMs=KMs, random_masks=random_masks)
 
 
 def main_setup(args):
