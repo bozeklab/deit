@@ -32,7 +32,7 @@ class FewExamplesDataset(VisionDataset):
         if self.transform is not None:
             image = self.transform(orig_image)
         else:
-            image = tensor_image
+            image = self.to_tensor(tensor_image)
 
         return tensor_image, image
 
