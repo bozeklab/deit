@@ -28,7 +28,7 @@ import pandas as pd
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Script containing tasks with inference only', add_help=False)
-    parser.add_argument('--batch-size', default=64, type=int)
+    parser.add_argument('--batch-size', default=4, type=int)
     # Model parameters
     parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
                         help='Name of model to train')
@@ -60,7 +60,7 @@ def get_args_parser():
 
 
 @torch.no_grad()
-def extract(model, device, KMs, random_masks, dataset):
+def extract(data_loader, model, device, KMs, random_masks):
     # switch to evaluation mode
     model.eval()
     division_masks = get_division_masks_for_model(model)
@@ -69,13 +69,8 @@ def extract(model, device, KMs, random_masks, dataset):
         f"{k}_{m}": {"features": [], "targets": []}
         for k, m in KMs
     }
-
-    images = []
-    for i in range(len(dataset)):
-        _, im = dataset[i]
-        images.append(im)
-
-    input_tensor = torch.stack(images)
+    data_it = iter(data_loader)
+    input_tensor, _ = next(iter(data_loader))
 
     # We need to reorder the images to [batch, channel, width, height]
     # The array of loaded images is [batch, height, width, channel]
@@ -141,15 +136,15 @@ def PCA_path_tokens_rgb(features, dataset, args, patch_size=16):
             plt.imshow(pca_features_rgb[i])
             fig.savefig(f"output_3_rgb_{kM}.png")
 
-def PCA_path_tokens_foreground_seg(features, dataset, args, patch_size=16):
+def PCA_path_tokens_foreground_seg(features, dataloader, args, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
     patch_w = 448 // patch_size
 
     images = []
     orig_images = []
-    for i in range(len(dataset)):
-        orig_im, im = dataset[i]
+    for i in range(len(dataloader)):
+        orig_im, im = dataloader[i]
         images.append(im)
         orig_images.append(orig_im)
 
@@ -204,8 +199,17 @@ def main_setup(args):
 
     args.data_set = 'FEW'
     dataset = build_dataset(is_train=True, args=args)
+    sampler = torch.utils.data.SequentialSampler(dataset)
 
-    return model, dataset
+    data_loader = torch.utils.data.DataLoader(
+        dataset, sampler=sampler,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_mem,
+        drop_last=False
+    )
+
+    return model, data_loader
 
 
 def main(args):
