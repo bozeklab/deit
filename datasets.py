@@ -17,7 +17,7 @@ class FewExamplesDataset(VisionDataset):
     def __init__(self, root, transform=None, train=True):
         super(FewExamplesDataset, self).__init__(root, transform=None)
         self.image_paths = os.path.join(root, f'{"train" if train else "test"}')
-
+        self.transform = transform
         self.file_list = [filename for filename in os.listdir(self.root) if filename.endswith('.jpg')]
 
     def __len__(self):
@@ -90,7 +90,7 @@ def build_dataset(is_train, args):
             transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
             transforms.ToTensor()
         ])
-        dataset = FewExamplesDataset(args.data_set, train=is_train, transform=transform)
+        dataset = FewExamplesDataset(args.data_path, train=is_train, transform=transform)
         nb_classes = -1
     else:
         transform = build_transform(is_train, args)
