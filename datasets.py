@@ -6,7 +6,7 @@ import json
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import ImageFolder, default_loader
 from torchvision.datasets import StanfordCars, Flowers102, VisionDataset
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data import create_transform
@@ -22,21 +22,16 @@ class FewExamplesDataset(VisionDataset):
         self.file_list = [filename for filename in os.listdir(self.image_paths) if filename.endswith('.jpg')]
 
     def __len__(self):
-        print('!!!')
-        print(self.file_list)
         return len(self.file_list)
 
     def __getitem__(self, idx):
-
-
         img_path = os.path.join(self.image_paths, self.file_list[idx])
         orig_image = Image.open(img_path)
-        tensor_image = self.to_tensor(orig_image)
 
-        if self.transform is not None:
-            image = self.transform(orig_image)
-        else:
-            image = self.to_tensor(tensor_image)
+        image = self.transform(orig_image)
+
+        orig_image = transforms.Resize((image.shape[1], image.shape[2]))(orig_image)
+        tensor_image = self.to_tensor(orig_image)
 
         return tensor_image, image
 
@@ -167,3 +162,37 @@ def build_transform(is_train, args):
     t.append(transforms.ToTensor())
     t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
     return transforms.Compose(t)
+
+
+def main():
+    # Define the root directory where your dataset is stored
+    root_dir = '/Users/piotrwojcik/PycharmProjects/deit/experiments/crane'  # Replace with the actual path
+
+    # Define your data transforms (if needed)
+    data_transform = transforms.Compose([
+        transforms.Resize((448, 448)),  # Example: Resize the images
+        transforms.ToTensor(),
+    ])
+
+    # Create a FewExamplesDataset instance for the training set
+    train_dataset = FewExamplesDataset(root_dir, transform=data_transform, train=True)
+
+    # Create a DataLoader for the training set
+    batch_size = 4
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+    # Iterate through the dataset using the DataLoader
+    for batch in train_loader:
+        tensor_images, transformed_images = batch
+
+        # Process your data here
+        # tensor_images contains the original images as tensors
+        # transformed_images contains the transformed images as tensors
+
+        # For example, you can print the shapes of the tensors
+        print("Original image shapes:", tensor_images.shape)
+        print("Transformed image shapes:", transformed_images.shape)
+
+
+if __name__ == "__main__":
+    main()

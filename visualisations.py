@@ -70,7 +70,6 @@ def extract(data_loader, model, device, KMs, random_masks):
         for k, m in KMs
     }
     data_iter = iter(data_loader)
-    print(data_iter)
 
     _, input_tensor = next(data_iter)
 
