@@ -18,6 +18,7 @@ class FewExamplesDataset(VisionDataset):
         super(FewExamplesDataset, self).__init__(root, transform=None)
         self.image_paths = os.path.join(root, f'{"train" if train else "test"}')
         self.transform = transform
+        self.to_tensor = transforms.ToTensor()
         self.file_list = [filename for filename in os.listdir(self.root) if filename.endswith('.jpg')]
 
     def __len__(self):
@@ -28,7 +29,7 @@ class FewExamplesDataset(VisionDataset):
         orig_image = Image.open(img_path)
         if self.transform is not None:
             image = self.transform(orig_image)
-        return orig_image, image
+        return self.to_tensor(orig_image), image
 
 
 class INatDataset(ImageFolder):
