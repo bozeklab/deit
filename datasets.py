@@ -91,9 +91,9 @@ class PatchedImageFolder(ImageFolder):
 def build_dataset(is_train, args):
     if args.data_set == 'FEW':
         transform = transforms.Compose([
+            transforms.ToTensor(),
             transforms.Resize((args.input_size, args.input_size)),  # Adjust the image size as needed
             transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
-            transforms.ToTensor()
         ])
         dataset = FewExamplesDataset(args.data_path, train=is_train, transform=transform)
         nb_classes = -1
