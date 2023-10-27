@@ -69,6 +69,8 @@ def extract(data_loader, model, device, KMs, random_masks):
         f"{k}_{m}": {"features": [], "targets": []}
         for k, m in KMs
     }
+    print(next(iter(data_loader)))
+
     _, input_tensor = next(iter(data_loader))
 
     # We need to reorder the images to [batch, channel, width, height]
@@ -196,9 +198,9 @@ def main_setup(args):
 
 
 def main(args):
-    model, ds = main_setup(args)
+    model, data_loader = main_setup(args)
 
-    ret_dict = extract_patches_k16(ds, model, args.device, random_masks=False)
+    ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
 
     #PCA_path_tokens_seg(ret_dict)
     PCA_path_tokens_rgb(ret_dict)
