@@ -19,7 +19,7 @@ class FewExamplesDataset(VisionDataset):
         self.image_paths = os.path.join(root, f'{"train" if train else "test"}')
         self.transform = transform
         self.to_tensor = transforms.ToTensor()
-        self.file_list = [filename for filename in os.listdir(self.root) if filename.endswith('.jpg')]
+        self.file_list = [filename for filename in os.listdir(self.image_paths) if filename.endswith('.jpg')]
 
     def __len__(self):
         return len(self.file_list)
@@ -28,9 +28,6 @@ class FewExamplesDataset(VisionDataset):
         img_path = os.path.join(self.image_paths, self.file_list[idx])
         orig_image = Image.open(img_path)
         tensor_image = self.to_tensor(orig_image)
-
-        print('!!!')
-        print(tensor_image)
 
         if self.transform is not None:
             image = self.transform(orig_image)
