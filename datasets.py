@@ -31,10 +31,10 @@ class FewExamplesDataset(VisionDataset):
 
         image = self.transform(orig_image)
 
+        orig_image = self.to_tensor(orig_image)
         orig_image = transforms.Resize((image.shape[1], image.shape[2]))(orig_image)
-        tensor_image = self.to_tensor(orig_image)
 
-        return tensor_image, image
+        return orig_image, image
 
 class INatDataset(ImageFolder):
     def __init__(self, root, train=True, year=2018, transform=None, target_transform=None,
@@ -198,8 +198,6 @@ def main():
     _ , transformed_images = next(iter(train_loader))
 
     _ , transformed_images = next(iter(train_loader))
-
-
 
 
 if __name__ == "__main__":
