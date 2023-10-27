@@ -27,6 +27,7 @@ class FewExamplesDataset(VisionDataset):
     def __getitem__(self, idx):
         img_path, _ = self.file_list[idx]
         orig_image = Image.open(img_path)
+        print(self.to_tensor(orig_image))
         if self.transform is not None:
             image = self.transform(orig_image)
         return self.to_tensor(orig_image), image
