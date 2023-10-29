@@ -251,7 +251,8 @@ def main_setup(args):
     with open(os.path.join(output_dir, "args.json"), "w") as f:
         json.dump(args.__dict__, f, indent=2)
 
-    utils.init_distributed_mode(args)
+    if args.distributed:
+        utils.init_distributed_mode(args)
     dataset, nb_classes = default_transform_dataset(is_train=args.data_split == "train", args=args)
     with open(os.path.join(output_dir, "class_to_idx.json"), "a") as f:
         f.write(json.dumps(dataset.class_to_idx))
@@ -330,7 +331,7 @@ def main(args):
 
         )
         flops = count_flops(create_model_fn, args.input_size)
-        flat_flops = [(str(k),i, v / 1e9) for k, l in flops.items() for i, v in enumerate(l)]
+        flat_flops = [(str(k), i, v / 1e9) for k, l in flops.items() for i, v in enumerate(l)]
         df = pd.DataFrame(flat_flops, columns=["K", "i", "GFLOPs"])
         pd.DataFrame.to_csv(df, os.path.join(output_dir, "count_flops.csv"))
 
