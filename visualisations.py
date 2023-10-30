@@ -164,7 +164,7 @@ in1k_classes = {
     'arch': 873
 }
 
-def tsne(features, classes_to_render):
+def tsne(features, k, classes_to_render):
     import cne
     targets = features['targets']
     features = features['features']
@@ -173,14 +173,14 @@ def tsne(features, classes_to_render):
     random_numbers = [random.randint(0, 999) for _ in range(50)]
 
     mask = torch.zeros(targets.shape).to(bool)
-    for k in range(0, 50):
+    for k in range(0, 10):
         mask_k = torch.tensor((targets == k))
         mask = torch.logical_or(mask, mask_k)
     y = targets[mask]
     x = features[mask]
 
 
-    print('Generating t-sne...')
+    print('Generating t-sne... for ', k)
 
     #embedder_ncvis = cne.CNE(loss_mode="nce",
     #                         k=15,
@@ -196,7 +196,7 @@ def tsne(features, classes_to_render):
     plt.scatter(*embd_ncvis.T, c=y, alpha=0.5, s=1.0, cmap="tab10", edgecolor="none")
     plt.gca().set_aspect("equal")
     plt.axis("off")
-    fig.savefig(f"tsne.png")
+    fig.savefig(f"tsne_{k}.png")
 
 
 
@@ -247,8 +247,9 @@ def main(args):
     model, data_loader = main_setup(args)
 
     #ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
-    features = np.load('/data/pwojcik/deit/debug/extract_k16/0_16.npz')
-    tsne(features, in1k_classes)
+    for k in range(0, 12):
+        features = np.load(f"/data/pwojcik/deit/debug/extract_k16/{k}_16.npz")
+        tsne(features, in1k_classes, k)
 
     #PCA_path_tokens_seg(ret_dict)
     #PCA_path_tokens_rgb(ret_dict)
