@@ -191,8 +191,10 @@ def tsne(features, classes_to_render):
     embd_ncvis = TSNE(n_components=2, learning_rate='auto', init = 'random', perplexity = 3).fit_transform(x)
 
     fig = plt.figure(figsize=(10, 10))
-    plt.scatter(*embd_ncvis.T, c=y, alpha=0.5, s=1.0, cmap="tab10", edgecolor="none")
+    plt.scatter(*embd_ncvis.T, c=y, alpha=0.1, s=1.0, cmap="tab10", edgecolor="none")
     plt.gca().set_aspect("equal")
+    ax = plt.axes()
+    ax.set_facecolor("red")
     plt.axis("off")
     plt.title("Parametric NCVis of MNIST")
     fig.savefig(f"tsne.png")
