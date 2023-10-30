@@ -28,6 +28,7 @@ from matplotlib.patches import Polygon
 import torch
 import torch.nn as nn
 import torchvision
+import models_v2
 from pathlib import Path
 
 from timm.models import create_model
