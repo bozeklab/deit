@@ -210,7 +210,7 @@ if __name__ == '__main__':
         img = img.to(device, non_blocking=True)
         features = model.comp_forward_afterK(img.to(device), K=4, masks=masks, keep_token_order=True)
         _ = model.comp_forward_afterK(img, K=0, masks=masks, keep_token_order=True)
-    attentions = model.last_attn()
+    attentions = model.last_attn
 
     nh = attentions.shape[1] # number of head
 
