@@ -247,7 +247,7 @@ def main(args):
     model, data_loader = main_setup(args)
 
     ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
-    for k in range(0, 12):
+    for k in range(0, 13):
         features = np.load(f"/data/pwojcik/deit/comp_deit_in1k/extract_k16/{k}_16.npz")
         tsne(features, k, in1k_classes)
 
