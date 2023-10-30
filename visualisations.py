@@ -130,6 +130,9 @@ def PCA_path_tokens_rgb(features):
             plt.imshow(pca_features_rgb[i])
             fig.savefig(f"output_3_rgb_{kM}.png")
 
+
+
+
 def PCA_path_tokens_foreground_seg(features, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
@@ -153,6 +156,38 @@ def PCA_path_tokens_foreground_seg(features, patch_size=16):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features[i * patch_h * patch_w: (i + 1) * patch_h * patch_w, 0].reshape(patch_h, patch_w))
             fig.savefig(f"output_3_{kM}.png")
+
+in1k_classes = {
+    'aircraft': 403,
+    'airliner': 404,
+    'arch': 873
+}
+
+def tsne(features, classes_to_render):
+    import cne
+    targets = features['targets']
+    features = features['features']
+
+    mask = torch.zeros(features['targets']).to(bool)
+    for k in classes_to_render.keys():
+        mask = torch.logical_or(mask, (targets == k))
+    y = targets[mask]
+    x = features[mask]
+
+    embedder_ncvis = cne.CNE(loss_mode="nce",
+                             k=15,
+                             optimizer="adam",
+                             parametric=True,
+                             print_freq_epoch=10)
+    embd_ncvis = embedder_ncvis.fit_transform(x)
+
+    fig = plt.figure()
+    plt.scatter(*embd_ncvis.T, c=y, alpha=0.5, s=1.0, cmap="tab10", edgecolor="none")
+    plt.gca().set_aspect("equal")
+    plt.axis("off")
+    plt.title("Parametric NCVis of MNIST")
+    fig.savefig(f"tsne_{k}.png")
+
 
 
 def extract_patches_k16(data_loader, model, device, random_masks, *args, **kwargs):
@@ -197,13 +232,16 @@ def main_setup(args):
     return model, data_loader
 
 
+
 def main(args):
     model, data_loader = main_setup(args)
 
-    ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
+    #ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
+    features = np.load('/data/pwojcik/deit/debug/extract_k16/1_16.npz')
+    tsne(features, in1k_classes)
 
     #PCA_path_tokens_seg(ret_dict)
-    PCA_path_tokens_rgb(ret_dict)
+    #PCA_path_tokens_rgb(ret_dict)
 
 
 if __name__ == '__main__':
