@@ -201,9 +201,6 @@ if __name__ == '__main__':
     w, h = img.shape[1] - img.shape[1] % args.patch_size, img.shape[2] - img.shape[2] % args.patch_size
     img = img[:, :w, :h].unsqueeze(0)
 
-    print('!!!')
-    print(img.shape[-2], img.shape[-1])
-
     w_featmap = img.shape[-2] // args.patch_size
     h_featmap = img.shape[-1] // args.patch_size
 
@@ -211,12 +208,8 @@ if __name__ == '__main__':
     with torch.cuda.amp.autocast():
         masks = division_masks[16][0]
         img = img.to(device, non_blocking=True)
-        features = model.comp_forward_afterK(img.to(device), K=4, masks=masks, keep_token_order=True)
         _ = model.comp_forward_afterK(img, K=0, masks=masks, keep_token_order=True)
-    attentions = model.last_attn
-    print('!!!!!!')
-    print(attentions.shape)
-
+    attentions = model.last_attn[11]
     nh = attentions.shape[1] # number of head
 
     # we keep only the output patch attention
