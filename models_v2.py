@@ -27,6 +27,7 @@ class Attention(nn.Module):
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
+        self.last_attn = None
 
     def forward(self, x):
         B, N, C = x.shape
@@ -37,6 +38,9 @@ class Attention(nn.Module):
 
         attn = (q @ k.transpose(-2, -1))
         attn = attn.softmax(dim=-1)
+
+        self.last_attn = attn.detach().clone()
+
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
@@ -406,6 +410,10 @@ class vit_models(nn.Module):
 
         x = self.norm(x)
         return x
+
+    @property
+    def last_attn(self):
+        return torch.stack([block.attn.last_attn for block in self.blocks], dim=0)
 
     def forward(self, x, K=0, masks=None, seq=False, cls_only=False):
         if seq:
