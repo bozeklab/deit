@@ -30,7 +30,7 @@ import torch.nn as nn
 import torchvision
 from pathlib import Path
 
-from timm import create_model
+from timm.models import create_model
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torchvision import transforms as pth_transforms
 import numpy as np
