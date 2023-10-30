@@ -168,12 +168,16 @@ def tsne(features, classes_to_render):
     targets = features['targets']
     features = features['features']
 
+    import random
+    random_numbers = [random.randint(0, 999) for _ in range(50)]
+
     mask = torch.zeros(targets.shape).to(bool)
-    for k in classes_to_render.keys():
-        mask_k = torch.tensor((targets == classes_to_render[k]))
+    for k in random_numbers:
+        mask_k = torch.tensor((targets == k))
         mask = torch.logical_or(mask, mask_k)
     y = targets[mask]
     x = features[mask]
+
 
     print('Generating t-sne...')
 
