@@ -7,6 +7,7 @@ import time
 import torch
 import torch.backends.cudnn as cudnn
 import json
+import os
 
 from pathlib import Path
 
@@ -201,6 +202,8 @@ def get_args_parser():
                         help='sample vit and input divisions during training.')
     parser.add_argument('--eval_every', default=1, type=int,
                         help='Eval and checkpoint every n epochs.')
+    parser.add_argument('--checkpoint_every', default=None, type=int,
+                        help='Save separate checkpoint every n epochs.')
     
 
 
@@ -493,6 +496,16 @@ def main(args):
                     'scaler': loss_scaler.state_dict(),
                     'args': args,
                 }, checkpoint_path)
+                if args.checkpoint_every is not None and epoch % args.checkpoint_every == 0:
+                    utils.save_on_master({
+                    'model': model_without_ddp.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'lr_scheduler': lr_scheduler.state_dict(),
+                    'epoch': epoch,
+                    'model_ema': get_state_dict(model_ema),
+                    'scaler': loss_scaler.state_dict(),
+                    'args': args,
+                }, f"{os.path.splitext(checkpoint_path)[0]}_ep{epoch}.pth")
              
         if epoch % args.eval_every == 0 or epoch + 1 == args.epochs:
             test_stats = evaluate(data_loader_val, model, device, epoch=epoch, ext_logger=ext_logger, KMs=[[0,1], [4,16], [8,16]])
