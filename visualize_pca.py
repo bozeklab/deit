@@ -189,14 +189,14 @@ def tsne(features, k, classes_to_render):
     #embd_ncvis = embedder_ncvis.fit_transform(x)
     embd_ncvis = TSNE(n_components=2, learning_rate='auto', init = 'random', perplexity = 3).fit_transform(x)
 
-    plt.style.use('dark_background')
+    #plt.style.use('dark_background')
 
     fig = plt.figure()
     plt.scatter(*embd_ncvis.T, c=y, alpha=0.7, s=3.5, cmap="tab10", edgecolor="none")
     plt.title(f"M=16, K={k}")
     plt.gca().set_aspect("equal")
     plt.axis("off")
-    fig.savefig(f"tsne_{k}.png")
+    fig.savefig(f"comp_deit_tsne_{k}.png")
 
 
 
@@ -247,12 +247,12 @@ def main(args):
     model, data_loader = main_setup(args)
 
     ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
-    #for k in range(0, 12):
-    #    features = np.load(f"/data/pwojcik/deit/debug/extract_k16/{k}_16.npz")
-        #tsne(features, k, in1k_classes)
+    for k in range(0, 12):
+        features = np.load(f"/data/pwojcik/deit/debug/comp_deit_in1k/{k}_16.npz")
+        tsne(features, k, in1k_classes)
 
     #PCA_path_tokens_seg(ret_dict)
-    PCA_path_tokens_rgb(ret_dict)
+    #PCA_path_tokens_rgb(ret_dict)
 
 
 if __name__ == '__main__':
