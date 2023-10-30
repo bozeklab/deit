@@ -193,7 +193,7 @@ def tsne(features, k, classes_to_render):
     plt.style.use('dark_background')
 
     fig = plt.figure()
-    plt.scatter(*embd_ncvis.T, c=y, alpha=0.5, s=1.4, cmap="tab10", edgecolor="none")
+    plt.scatter(*embd_ncvis.T, c=y, alpha=0.7, s=1.4, cmap="tab10", edgecolor="none")
     plt.gca().set_aspect("equal")
     plt.axis("off")
     fig.savefig(f"tsne_{k}.png")
