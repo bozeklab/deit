@@ -130,7 +130,7 @@ def PCA_path_tokens_rgb(features):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features_rgb[i])
             fig.savefig(f"output_3_rgb_{kM}.png")
-
+        print('Saved PCA matching')
 
 
 def PCA_path_tokens_foreground_seg(features, patch_size=16):
