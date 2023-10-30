@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 
+from sklearn.manifold import TSNE
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.models import create_model
 from pathlib import Path
@@ -172,7 +173,7 @@ def tsne(features, classes_to_render):
     random_numbers = [random.randint(0, 999) for _ in range(50)]
 
     mask = torch.zeros(targets.shape).to(bool)
-    for k in random_numbers:
+    for k in range(0, 50):
         mask_k = torch.tensor((targets == k))
         mask = torch.logical_or(mask, mask_k)
     y = targets[mask]
@@ -181,12 +182,13 @@ def tsne(features, classes_to_render):
 
     print('Generating t-sne...')
 
-    embedder_ncvis = cne.CNE(loss_mode="nce",
-                             k=15,
-                             optimizer="adam",
-                             parametric=True,
-                             print_freq_epoch=10)
-    embd_ncvis = embedder_ncvis.fit_transform(x)
+    #embedder_ncvis = cne.CNE(loss_mode="nce",
+    #                         k=15,
+    #                         optimizer="adam",
+    #                         parametric=True,
+    #                         print_freq_epoch=10)
+    #embd_ncvis = embedder_ncvis.fit_transform(x)
+    embd_ncvis = TSNE(n_components=2, learning_rate='auto', init = 'random', perplexity = 3).fit_transform(x)
 
     fig = plt.figure()
     plt.scatter(*embd_ncvis.T, c=y, alpha=0.5, s=1.0, cmap="tab10", edgecolor="none")
