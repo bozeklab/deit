@@ -133,7 +133,6 @@ def PCA_path_tokens_rgb(features):
 
 
 
-
 def PCA_path_tokens_foreground_seg(features, patch_size=16):
     feat_dim = 384
     patch_h = 448 // patch_size
@@ -247,7 +246,7 @@ def main_setup(args):
 def main(args):
     model, data_loader = main_setup(args)
 
-    #ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
+    ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
     for k in range(0, 12):
         features = np.load(f"/data/pwojcik/deit/debug/extract_k16/{k}_16.npz")
         tsne(features, k, in1k_classes)
