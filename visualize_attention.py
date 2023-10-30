@@ -207,6 +207,7 @@ if __name__ == '__main__':
     division_masks = get_division_masks_for_model(model)
     with torch.cuda.amp.autocast():
         masks = division_masks[16][0]
+        img = img.to(device, non_blocking=True)
         features = model.comp_forward_afterK(img.to(device), K=4, masks=masks, keep_token_order=True)
         _ = model.comp_forward_afterK(img, K=0, masks=masks, keep_token_order=True)
     attentions = model.last_attn()
