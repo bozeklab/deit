@@ -31,6 +31,7 @@ import torchvision
 from pathlib import Path
 
 from timm import create_model
+from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torchvision import transforms as pth_transforms
 import numpy as np
 from PIL import Image
@@ -132,8 +133,8 @@ def extract(data_loader, model, device, KMs, random_masks):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Visualize Self-Attention maps')
-    parser.add_argument('--arch', default='vit_small', type=str,
-        choices=['vit_tiny', 'vit_small', 'vit_base'], help='Architecture (support only ViT atm).')
+    parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
+                        help='Name of model to train')
     parser.add_argument('--patch_size', default=8, type=int, help='Patch resolution of the model.')
     parser.add_argument('--pretrained_weights', default='', type=str,
         help="Path to pretrained weights to load.")
@@ -186,7 +187,7 @@ if __name__ == '__main__':
     transform = pth_transforms.Compose([
         pth_transforms.Resize(args.image_size),
         pth_transforms.ToTensor(),
-        pth_transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        pth_transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
     ])
     img = transform(img)
 
