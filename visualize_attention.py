@@ -212,8 +212,14 @@ if __name__ == '__main__':
     attentions = model.last_attn[11]
     nh = attentions.shape[1] # number of head
 
+    print('!!!!')
+    print(attentions.shape)
+
     # we keep only the output patch attention
     attentions = attentions[0, :, 0, 1:].reshape(nh, -1)
+
+    print('!!---!!')
+    print(attentions.shape)
 
     if args.threshold is not None:
         # we keep only a certain percentage of the mass
