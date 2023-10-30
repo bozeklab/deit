@@ -170,7 +170,7 @@ def tsne(features, classes_to_render):
 
     mask = torch.zeros(targets.shape).to(bool)
     for k in classes_to_render.keys():
-        mask_k = (targets == classes_to_render[k])
+        mask_k = torch.tensor((targets == classes_to_render[k]))
         mask = torch.logical_or(mask, mask_k)
     y = targets[mask]
     x = features[mask]
