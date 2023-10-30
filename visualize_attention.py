@@ -143,6 +143,7 @@ if __name__ == '__main__':
                         help='dataset path')
     parser.add_argument('--data-split', default='val', choices=['train', 'val'],
                         type=str)
+    parser.add_argument('--device', default="cuda", type=str)
     parser.add_argument('--checkpoint', default=None, help="path to model checkpoint")
     parser.add_argument("--image_path", default=None, type=str, help="Path of the image to load.")
     parser.add_argument("--image_size", default=(480, 480), type=int, nargs="+", help="Resize image.")
