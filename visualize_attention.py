@@ -160,7 +160,7 @@ if __name__ == '__main__':
         args.model,
         pretrained=False,
         num_classes=1000,
-        img_size=args.input_size
+        img_size=args.image_size
     )
     model = model.to(args.device)
 
