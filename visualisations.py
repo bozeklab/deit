@@ -174,6 +174,8 @@ def tsne(features, classes_to_render):
     y = targets[mask]
     x = features[mask]
 
+    print('Generating t-sne...')
+
     embedder_ncvis = cne.CNE(loss_mode="nce",
                              k=15,
                              optimizer="adam",
