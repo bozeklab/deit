@@ -246,7 +246,7 @@ def main(args):
     model, data_loader = main_setup(args)
 
     #ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
-    features = np.load('/data/pwojcik/deit/debug/extract_k16/5_16.npz')
+    features = np.load('/data/pwojcik/deit/debug/extract_k16/0_16.npz')
     tsne(features, in1k_classes)
 
     #PCA_path_tokens_seg(ret_dict)
