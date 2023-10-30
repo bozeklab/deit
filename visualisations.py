@@ -173,9 +173,9 @@ def tsne(features, k, classes_to_render):
     random_numbers = [random.randint(0, 999) for _ in range(50)]
 
     mask = torch.zeros(targets.shape).to(bool)
-    for k in range(0, 10):
-        mask_k = torch.tensor((targets == k))
-        mask = torch.logical_or(mask, mask_k)
+    for i in range(0, 10):
+        mask_i = torch.tensor((targets == i))
+        mask = torch.logical_or(mask, mask_i)
     y = targets[mask]
     x = features[mask]
 
