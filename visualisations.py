@@ -192,11 +192,10 @@ def tsne(features, classes_to_render):
 
     plt.style.use('dark_background')
 
-    fig = plt.figure(figsize=(50, 50))
+    fig = plt.figure()
     plt.scatter(*embd_ncvis.T, c=y, alpha=0.5, s=1.0, cmap="tab10", edgecolor="none")
     plt.gca().set_aspect("equal")
     plt.axis("off")
-    plt.title("Parametric NCVis of MNIST")
     fig.savefig(f"tsne.png")
 
 
