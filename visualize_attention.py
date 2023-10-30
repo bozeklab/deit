@@ -136,7 +136,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Visualize Self-Attention maps')
     parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--patch_size', default=8, type=int, help='Patch resolution of the model.')
+    parser.add_argument('--patch_size', default=16, type=int, help='Patch resolution of the model.')
     parser.add_argument('--pretrained_weights', default='', type=str,
         help="Path to pretrained weights to load.")
     parser.add_argument('--data-path', default=f'~/datasets/imagenet/ILSVRC/Data/CLS-LOC/', type=str,
