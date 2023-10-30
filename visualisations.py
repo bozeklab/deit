@@ -168,7 +168,7 @@ def tsne(features, classes_to_render):
     targets = features['targets']
     features = features['features']
 
-    mask = torch.zeros(features['targets']).to(bool)
+    mask = torch.zeros(features['targets'].shape).to(bool)
     for k in classes_to_render.keys():
         mask = torch.logical_or(mask, (targets == k))
     y = targets[mask]
