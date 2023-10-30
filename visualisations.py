@@ -170,7 +170,8 @@ def tsne(features, classes_to_render):
 
     mask = torch.zeros(targets.shape).to(bool)
     for k in classes_to_render.keys():
-        mask = torch.logical_or(mask, (targets == k))
+        mask_k = (targets == k)
+        mask = torch.logical_or(mask, mask_k)
     y = targets[mask]
     x = features[mask]
 
@@ -188,7 +189,7 @@ def tsne(features, classes_to_render):
     plt.gca().set_aspect("equal")
     plt.axis("off")
     plt.title("Parametric NCVis of MNIST")
-    fig.savefig(f"tsne_{k}.png")
+    fig.savefig(f"tsne.png")
 
 
 
