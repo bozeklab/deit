@@ -460,7 +460,7 @@ def main(args):
                 loss_scaler.load_state_dict(checkpoint['scaler'])
         lr_scheduler.step(args.start_epoch)
     if args.eval:
-        test_stats = evaluate(data_loader_val, model, device, ext_logger=ext_logger)
+        test_stats = evaluate(data_loader_val, model, model_without_ddp, device, ext_logger=ext_logger)
         
         if args.output_dir and utils.is_main_process():
             with (output_dir / "log.txt").open("a") as f:
@@ -475,7 +475,7 @@ def main(args):
             data_loader_train.sampler.set_epoch(epoch)
 
         train_stats = train_one_epoch(
-            model, criterion, data_loader_train,
+            model, model_without_ddp, criterion, data_loader_train,
             optimizer, device, epoch, loss_scaler,
             args.clip_grad, model_ema, mixup_fn,
             set_training_mode=args.train_mode,  # keep in eval mode for deit finetuning / train mode for training and deit III finetuning
@@ -496,7 +496,7 @@ def main(args):
                     'scaler': loss_scaler.state_dict(),
                     'args': args,
                 }, checkpoint_path)
-                if args.checkpoint_every is not None and epoch % args.checkpoint_every == 0:
+                if args.checkpoint_every is not None and epoch +1 % args.checkpoint_every == 0:
                     utils.save_on_master({
                     'model': model_without_ddp.state_dict(),
                     'optimizer': optimizer.state_dict(),
@@ -508,7 +508,7 @@ def main(args):
                 }, f"{os.path.splitext(checkpoint_path)[0]}_ep{epoch}.pth")
              
         if epoch % args.eval_every == 0 or epoch + 1 == args.epochs:
-            test_stats = evaluate(data_loader_val, model, device, epoch=epoch, ext_logger=ext_logger, KMs=[[0,1], [4,16], [8,16]])
+            test_stats = evaluate(data_loader_val, model, model_without_ddp, device, epoch=epoch, ext_logger=ext_logger, KMs=[[0,1], [4,16], [8,16]])
             print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
 
             if max_accuracy < test_stats["acc1"]:
