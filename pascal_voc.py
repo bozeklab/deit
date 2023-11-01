@@ -39,8 +39,8 @@ def parse_annotation_and_mask(annotation_path, masks_dir):
     }
 
 def main():
-    dataset_dir = '/data/pwojcik/VOCdevkit/VOC2012'
-    validation_image_set_file = os.path.join(dataset_dir, 'ImageSets/Main/val.txt')
+    dataset_dir = '/data/pwojcik//data/pwojcik/VOC2012_test'
+    validation_image_set_file = os.path.join(dataset_dir, 'ImageSets/Segmentation/test.txt')
     annotations_dir = os.path.join(dataset_dir, 'Annotations')
     masks_dir = os.path.join(dataset_dir, 'SegmentationObject')
 
@@ -58,8 +58,10 @@ def main():
         for i, obj in enumerate(annotation_info['objects']):
             print(f'Object: {obj["name"]}')
             print(f'Bounding Box: {obj["bbox"]}')
+            print()
             mask = annotation_info['masks'][i]
             print(f'Mask Shape: {mask.shape}')
+
 
 if __name__ == '__main__':
     main()
