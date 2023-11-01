@@ -39,7 +39,7 @@ def parse_annotation_and_mask(annotation_path, masks_dir):
     }
 
 def main():
-    dataset_dir = '/data/pwojcik/VOC2012_test'
+    dataset_dir = '/data/pwojcik/VOCdevkit/VOC2012/'
     validation_image_set_file = os.path.join(dataset_dir, 'ImageSets/Segmentation/test.txt')
     annotations_dir = os.path.join(dataset_dir, 'Annotations')
     masks_dir = os.path.join(dataset_dir, 'SegmentationObject')
