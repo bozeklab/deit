@@ -131,3 +131,4 @@ if __name__ == '__main__':
             unique = np.unique(mask)
             print(unique.tolist())
             print(f'Mask Shape: {mask.shape}')
+        print()
