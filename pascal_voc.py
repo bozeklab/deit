@@ -7,6 +7,7 @@ import random
 import colorsys
 import requests
 from io import BytesIO
+import xml.etree.ElementTree as ET
 
 import skimage.io
 from skimage.measure import find_contours
