@@ -124,11 +124,9 @@ if __name__ == '__main__':
         print(f'Image Path: {image_path}')
         print(f'Width: {annotation_info["width"]}, Height: {annotation_info["height"]}')
 
-        for i, obj in enumerate(annotation_info['objects']):
-            print(f'Object: {obj["name"]}')
-            print(f'Bounding Box: {obj["bbox"]}')
-            mask = annotation_info['masks'][i]
-            unique = np.unique(mask)
-            print(unique.tolist())
-            print(f'Mask Shape: {mask.shape}')
+        objs = annotation_info['objects']
+        if len(annotation_info['masks']) > 0:
+            mask = annotation_info['masks'][0]
+            unique = np.unique(annotation_info['masks'])[1:-1]
+            print(unique)
         print()
