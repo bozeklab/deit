@@ -7,6 +7,7 @@ import random
 import colorsys
 import requests
 from io import BytesIO
+from PIL import Image
 import xml.etree.ElementTree as ET
 
 import skimage.io
@@ -52,7 +53,9 @@ def parse_annotation_and_mask(annotation_path, masks_dir):
         })
 
         mask_file = os.path.join(masks_dir, image_path.replace('.jpg', '.png'))
-        mask = cv2.imread(mask_file, cv2.IMREAD_GRAYSCALE)
+        mask = Image.open(mask_file)
+        from torchvision import transforms
+        mask = transforms.Compose([transforms.ToTensor(mask)])
         masks.append(mask)
 
     return {
@@ -123,7 +126,6 @@ if __name__ == '__main__':
         for i, obj in enumerate(annotation_info['objects']):
             print(f'Object: {obj["name"]}')
             print(f'Bounding Box: {obj["bbox"]}')
-            print()
             mask = annotation_info['masks'][i]
             unique = np.unique(mask)
             print(unique.tolist())
