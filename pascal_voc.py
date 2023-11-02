@@ -131,7 +131,7 @@ if __name__ == '__main__':
         print(f'Image Path: {image_path}')
         print(f'Width: {annotation_info["width"]}, Height: {annotation_info["height"]}')
 
-        img = transform(Image.open(img))
+        img = transform(Image.open(image_path))
 
         # make the image divisible by the patch size
         w, h = img.shape[1] - img.shape[1] % args.patch_size, img.shape[2] - img.shape[2] % args.patch_size
