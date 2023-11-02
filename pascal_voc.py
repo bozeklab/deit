@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
     for image_id in validation_image_list:
         annotation_file = os.path.join(annotations_dir, image_id + '.xml')
-        annotation_info = parse_annotation_and_mask(annotation_file, masks_dir, args.img_size)
+        annotation_info = parse_annotation_and_mask(annotation_file, masks_dir, args.image_size)
 
         image_path = os.path.join(dataset_dir, 'JPEGImages', annotation_info['image_path'])
         print(f'Image Path: {image_path}')
