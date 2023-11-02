@@ -16,6 +16,7 @@ from matplotlib.patches import Polygon
 import torch
 import torch.nn as nn
 import torchvision
+import numpy as np
 import models_v2
 from pathlib import Path
 
@@ -124,5 +125,6 @@ if __name__ == '__main__':
             print(f'Bounding Box: {obj["bbox"]}')
             print()
             mask = annotation_info['masks'][i]
-            print(mask)
+            unique = np.unique(mask)
+            print(unique.tolist())
             print(f'Mask Shape: {mask.shape}')
