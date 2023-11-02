@@ -124,4 +124,5 @@ if __name__ == '__main__':
             print(f'Bounding Box: {obj["bbox"]}')
             print()
             mask = annotation_info['masks'][i]
+            print(mask)
             print(f'Mask Shape: {mask.shape}')
