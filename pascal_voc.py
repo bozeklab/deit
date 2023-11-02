@@ -27,6 +27,7 @@ from torchvision import transforms as pth_transforms
 import numpy as np
 from PIL import Image
 import utils
+from mask_const import get_division_masks_for_model
 
 
 def parse_annotation_and_mask(annotation_path, masks_dir):
@@ -113,6 +114,12 @@ if __name__ == '__main__':
     annotations_dir = os.path.join(dataset_dir, 'Annotations')
     masks_dir = os.path.join(dataset_dir, 'SegmentationObject')
 
+    transform = pth_transforms.Compose([
+        pth_transforms.Resize(args.image_size),
+        pth_transforms.ToTensor(),
+        pth_transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
+    ])
+
     with open(validation_image_set_file, 'r') as f:
         validation_image_list = f.read().strip().split('\n')
 
@@ -124,9 +131,49 @@ if __name__ == '__main__':
         print(f'Image Path: {image_path}')
         print(f'Width: {annotation_info["width"]}, Height: {annotation_info["height"]}')
 
+        img = transform(Image.open(img))
+
+        # make the image divisible by the patch size
+        w, h = img.shape[1] - img.shape[1] % args.patch_size, img.shape[2] - img.shape[2] % args.patch_size
+        img = img[:, :w, :h].unsqueeze(0)
+
+        w_featmap = img.shape[-2] // args.patch_size
+        h_featmap = img.shape[-1] // args.patch_size
+
+        division_masks = get_division_masks_for_model(model)
+        with torch.cuda.amp.autocast():
+            masks = division_masks[16][0]
+            img = img.to(device, non_blocking=True)
+            _ = model.comp_forward_afterK(img, K=0, masks=masks, keep_token_order=True)
+        attentions = model.last_attn[11]
+        nh = attentions.shape[1]  # number of head
+
+        # we keep only the output patch attention
+        attentions = attentions[0, :, 0, 1:].reshape(nh, -1)
+
+        if args.threshold is not None:
+            # we keep only a certain percentage of the mass
+            val, idx = torch.sort(attentions)
+            val /= torch.sum(val, dim=1, keepdim=True)
+            cumval = torch.cumsum(val, dim=1)
+            th_attn = cumval > (1 - args.threshold)
+            idx2 = torch.argsort(idx)
+            for head in range(nh):
+                th_attn[head] = th_attn[head][idx2[head]]
+            th_attn = th_attn.reshape(nh, w_featmap, h_featmap).float()
+            # interpolate
+            th_attn = nn.functional.interpolate(th_attn.unsqueeze(0), scale_factor=args.patch_size, mode="nearest")[
+                0].cpu().numpy()
+
+        attentions = attentions.reshape(nh, w_featmap, h_featmap)
+        attentions = nn.functional.interpolate(attentions.unsqueeze(0), scale_factor=args.patch_size, mode="nearest")[
+            0].cpu().numpy()
+
         objs = annotation_info['objects']
         if len(annotation_info['masks']) > 0:
             mask = annotation_info['masks'][0]
             unique = np.unique(mask).tolist()[1:-1]
             print(unique)
-        print()
+            #for o in unique:
+
+
