@@ -124,6 +124,7 @@ if __name__ == '__main__':
     with open(validation_image_set_file, 'r') as f:
         validation_image_list = f.read().strip().split('\n')
 
+    jacs = []
     for image_id in validation_image_list:
         annotation_file = os.path.join(annotations_dir, image_id + '.xml')
         annotation_info = parse_annotation_and_mask(annotation_file, masks_dir, args.image_size)
@@ -171,6 +172,7 @@ if __name__ == '__main__':
             0].cpu().numpy()
 
         objs = annotation_info['objects']
+
         if len(annotation_info['masks']) > 0:
             mask = annotation_info['masks'][0]
             unique = np.unique(mask).tolist()[1:-1]
@@ -186,7 +188,7 @@ if __name__ == '__main__':
                 jaco = intersection / union
                 jac += max(jaco)
             jac /= len(unique)
-            print(jac)
-            print()
+            jacs.append(jac.item())
+    print(print("Jaccarx:", sum(jacs) / len(jacs)))
 
 
