@@ -175,6 +175,15 @@ if __name__ == '__main__':
             mask = annotation_info['masks'][0]
             unique = np.unique(mask).tolist()[1:-1]
             print(unique)
-            #for o in unique:
+            jac = 0
+            for o in unique:
+                masko = mask == o
+                intersection = masko * th_attn
+                intersection = torch.sum(torch.sum(intersection, dim=-1), dim=-1)
+                union = (masko + th_attn) > 0
+                union = torch.sum(torch.sum(union, dim=-1), dim=-1)
+                jaco = intersection / union
+                jac += max(jaco)
+            jac /= len(unique)
 
 
