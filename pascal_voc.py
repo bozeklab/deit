@@ -116,6 +116,8 @@ if __name__ == '__main__':
     with open(validation_image_set_file, 'r') as f:
         validation_image_list = f.read().strip().split('\n')
 
+    exit(0)
+
     for image_id in validation_image_list:
         annotation_file = os.path.join(annotations_dir, image_id + '.xml')
         annotation_info = parse_annotation_and_mask(annotation_file, masks_dir)
