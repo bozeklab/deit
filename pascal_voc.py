@@ -186,5 +186,7 @@ if __name__ == '__main__':
                 jaco = intersection / union
                 jac += max(jaco)
             jac /= len(unique)
+            print(jac)
+            print()
 
 
