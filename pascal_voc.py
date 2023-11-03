@@ -178,9 +178,9 @@ if __name__ == '__main__':
         if len(annotation_info['masks']) > 0:
             mask = annotation_info['masks'][0]
             unique = np.unique(mask).tolist()[1:-1]
-            assert len(objs) == len(unique)
             if len(unique) == 0:
                 continue
+            assert len(objs) == len(unique)
             jac = 0
             for o in unique:
                 masko = mask == o
