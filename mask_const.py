@@ -85,7 +85,8 @@ DIVISION_SPECS_30_30 = {
 DIVISION_MASKS = {
     12: division_masks_from_spec(DIVISION_SPECS_12_12),
     14: division_masks_from_spec(DIVISION_SPECS_14_14),
-    28: division_masks_from_spec(DIVISION_SPECS_28_28)
+    28: division_masks_from_spec(DIVISION_SPECS_28_28),
+    30: division_masks_from_spec(DIVISION_SPECS_30_30)
 }
 
 DIVISION_IDS = {
