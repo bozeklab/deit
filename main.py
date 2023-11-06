@@ -496,7 +496,7 @@ def main(args):
                     'scaler': loss_scaler.state_dict(),
                     'args': args,
                 }, checkpoint_path)
-                if args.checkpoint_every is not None and epoch +1 % args.checkpoint_every == 0:
+                if args.checkpoint_every is not None and (epoch +1) % args.checkpoint_every == 0:
                     utils.save_on_master({
                     'model': model_without_ddp.state_dict(),
                     'optimizer': optimizer.state_dict(),
