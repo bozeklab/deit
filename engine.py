@@ -18,7 +18,7 @@ import utils
 from mask_const import sample_masks, get_division_masks_for_model
 
 
-def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
+def train_one_epoch(model: torch.nn.Module, model_without_ddp: torch.nn.Module, criterion: DistillationLoss,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
                     model_ema: Optional[ModelEma] = None, mixup_fn: Optional[Mixup] = None,
@@ -49,8 +49,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         with torch.cuda.amp.autocast():
             K, M = 0, 1
             if sample_divisions:
-                division_masks = get_division_masks_for_model(model)
-                K = random.randint(0, len(model.blocks))
+                division_masks = get_division_masks_for_model(model_without_ddp)
+                K = random.randint(0, len(model_without_ddp.blocks))
                 M = random.choice(list(division_masks.keys()))
                 masks = sample_masks(division_masks, M)
             
@@ -95,12 +95,12 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None, KMs=[[0,1]]):
+def evaluate(data_loader, model, model_without_ddp, device, epoch=None, ext_logger: Optional[Callable[[Dict, int], None]] = None, KMs=[[0,1]]):
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
     # switch to evaluation mode
     model.eval()
-    division_masks = get_division_masks_for_model(model)
+    division_masks = get_division_masks_for_model(model_without_ddp)
 
 
     for images, target in metric_logger.log_every(data_loader, 10, header):

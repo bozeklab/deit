@@ -81,7 +81,7 @@ def evaluate(data_loader, model, device, KMs, random_masks, seq: bool=False, gro
             # compute output
             with torch.cuda.amp.autocast():
                 outputs = [
-                    [[k, m], model(images, K=k, masks=sample_masks(division_masks, m) if random_masks else division_masks[m][0])]
+                    [[k, m], model(images, K=k, masks=sample_masks(division_masks, m) if random_masks else division_masks[m][0], seq=seq)]
                     for k, m in KMs
                 ]
             accuracies = [
