@@ -196,7 +196,7 @@ if __name__ == '__main__':
                 jac += max(jaco)
             jac /= len(unique)
             jacs += jac
-    print("Jaccard:", jacs)
+    print("Jaccard:", jacs.item())
     #print("Jaccard:", sum(jacs) / len(jacs))
 
 
