@@ -185,6 +185,7 @@ if __name__ == '__main__':
             if len(objs) != len(unique):
                 print(objs)
                 print(unique)
+                print(mask)
                 continue
             #assert len(objs) == len(unique)
             jac = 0
