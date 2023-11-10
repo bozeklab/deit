@@ -178,7 +178,7 @@ if __name__ == '__main__':
             0].cpu().numpy()
 
         objs = annotation_info['objects']
-
+        jacs = 0
         if len(annotation_info['masks']) > 0:
             mask = annotation_info['masks'][0]
             unique = np.unique(mask).tolist()[1:-1]
@@ -195,7 +195,8 @@ if __name__ == '__main__':
                 jaco = intersection / union
                 jac += max(jaco)
             jac /= len(unique)
-            jacs.append(jac.item())
-    print("Jaccard:", sum(jacs) / len(jacs))
+            jacs += jac
+    print("Jaccard:", jacs)
+    #print("Jaccard:", sum(jacs) / len(jacs))
 
 
