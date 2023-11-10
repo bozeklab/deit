@@ -129,6 +129,7 @@ if __name__ == '__main__':
         validation_image_list = f.read().strip().split('\n')
 
     jacs = []
+    torch.set_printoptions(threshold=10000)
     np.set_printoptions(threshold=np.inf)
     for image_id in validation_image_list:
         annotation_file = os.path.join(annotations_dir, image_id + '.xml')
