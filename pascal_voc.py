@@ -79,7 +79,7 @@ if __name__ == '__main__':
         help="Path to pretrained weights to load.")
     parser.add_argument('--device', default="cuda", type=str)
     parser.add_argument('--checkpoint', default=None, help="path to model checkpoint")
-    parser.add_argument("--image_size", default=(224, 224), type=int, nargs="+", help="Resize image.")
+    parser.add_argument("--image_size", default=(480, 480), type=int, nargs="+", help="Resize image.")
     parser.add_argument('--output_dir', default='.', help='Path where to save visualizations.')
     parser.add_argument("--threshold", type=float, default=None, help="""We visualize masks
         obtained by thresholding the self-attention maps to keep xx% of the mass.""")
