@@ -104,7 +104,7 @@ if __name__ == '__main__':
     model = model.to(args.device)
 
     if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint, map_location='cpu')
+        checkpoint = torch.load(args.checkpoint, map_location='cpu', strict=False)
         #print(checkpoint.keys())
         utils.interpolate_pos_embed(model, checkpoint)
         msg = model.load_state_dict(checkpoint)
