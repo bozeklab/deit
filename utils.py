@@ -240,7 +240,7 @@ def init_distributed_mode(args):
 
 def interpolate_pos_embed(model, checkpoint_model):
     if 'pos_embed' in checkpoint_model:
-        pos_embed_checkpoint = checkpoint_model['pos_embed']
+        pos_embed_checkpoint = checkpoint_model['pos_embed'][:, 1:, :]
         embedding_size = pos_embed_checkpoint.shape[-1]
         num_patches = model.patch_embed.num_patches
         num_extra_tokens = model.pos_embed.shape[-2] - num_patches
@@ -254,8 +254,6 @@ def interpolate_pos_embed(model, checkpoint_model):
             extra_tokens = pos_embed_checkpoint[:, :num_extra_tokens]
             # only the position tokens are interpolated
             pos_tokens = pos_embed_checkpoint[:, num_extra_tokens:]
-            print('!!!')
-            print(pos_tokens.shape)
             pos_tokens = pos_tokens.reshape(-1, orig_size, orig_size, embedding_size).permute(0, 3, 1, 2)
             pos_tokens = torch.nn.functional.interpolate(
                 pos_tokens, size=(new_size, new_size), mode='bicubic', align_corners=False)
