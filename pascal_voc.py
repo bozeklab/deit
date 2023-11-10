@@ -128,75 +128,78 @@ if __name__ == '__main__':
     with open(validation_image_set_file, 'r') as f:
         validation_image_list = f.read().strip().split('\n')
 
-    jacs = []
-    torch.set_printoptions(threshold=10000)
-    np.set_printoptions(threshold=np.inf)
-    for image_id in validation_image_list:
-        annotation_file = os.path.join(annotations_dir, image_id + '.xml')
-        annotation_info = parse_annotation_and_mask(annotation_file, masks_dir, args.image_size)
 
-        image_path = os.path.join(dataset_dir, 'JPEGImages', annotation_info['image_path'])
-        print(f'Image Path: {image_path}')
-        print(f'Width: {annotation_info["width"]}, Height: {annotation_info["height"]}')
+    #torch.set_printoptions(threshold=10000)
+    #np.set_printoptions(threshold=np.inf)
+    jaccards = []
+    for K in range(len(model.blocks)+1):
+        for image_id in validation_image_list:
+            annotation_file = os.path.join(annotations_dir, image_id + '.xml')
+            annotation_info = parse_annotation_and_mask(annotation_file, masks_dir, args.image_size)
 
-        img = transform(Image.open(image_path))
+            image_path = os.path.join(dataset_dir, 'JPEGImages', annotation_info['image_path'])
+            #print(f'Image Path: {image_path}')
+            #print(f'Width: {annotation_info["width"]}, Height: {annotation_info["height"]}')
 
-        # make the image divisible by the patch size
-        w, h = img.shape[1] - img.shape[1] % args.patch_size, img.shape[2] - img.shape[2] % args.patch_size
-        img = img[:, :w, :h].unsqueeze(0)
+            img = transform(Image.open(image_path))
 
-        w_featmap = img.shape[-2] // args.patch_size
-        h_featmap = img.shape[-1] // args.patch_size
+            # make the image divisible by the patch size
+            w, h = img.shape[1] - img.shape[1] % args.patch_size, img.shape[2] - img.shape[2] % args.patch_size
+            img = img[:, :w, :h].unsqueeze(0)
 
-        division_masks = get_division_masks_for_model(model)
-        with torch.cuda.amp.autocast():
-            masks = division_masks[16][0]
-            img = img.to(device, non_blocking=True)
-            _ = model.comp_forward_afterK(img, K=0, masks=masks, keep_token_order=True)
-        attentions = model.last_attn[11]
-        nh = attentions.shape[1]  # number of head
+            w_featmap = img.shape[-2] // args.patch_size
+            h_featmap = img.shape[-1] // args.patch_size
 
-        # we keep only the output patch attention
-        attentions = attentions[0, :, 0, 1:].reshape(nh, -1)
+            division_masks = get_division_masks_for_model(model)
+            with torch.cuda.amp.autocast():
+                masks = division_masks[16][0]
+                img = img.to(device, non_blocking=True)
+                _ = model.comp_forward_afterK(img, K=K, masks=masks, keep_token_order=True)
+            attentions = model.last_attn[11]
+            nh = attentions.shape[1]  # number of head
 
-        if args.threshold is not None:
-            # we keep only a certain percentage of the mass
-            val, idx = torch.sort(attentions)
-            val /= torch.sum(val, dim=1, keepdim=True)
-            cumval = torch.cumsum(val, dim=1)
-            th_attn = cumval > (1 - args.threshold)
-            idx2 = torch.argsort(idx)
-            for head in range(nh):
-                th_attn[head] = th_attn[head][idx2[head]]
-            th_attn = th_attn.reshape(nh, w_featmap, h_featmap).float()
-            # interpolate
-            th_attn = nn.functional.interpolate(th_attn.unsqueeze(0), scale_factor=args.patch_size, mode="nearest")[
+            # we keep only the output patch attention
+            attentions = attentions[0, :, 0, 1:].reshape(nh, -1)
+
+            if args.threshold is not None:
+                # we keep only a certain percentage of the mass
+                val, idx = torch.sort(attentions)
+                val /= torch.sum(val, dim=1, keepdim=True)
+                cumval = torch.cumsum(val, dim=1)
+                th_attn = cumval > (1 - args.threshold)
+                idx2 = torch.argsort(idx)
+                for head in range(nh):
+                    th_attn[head] = th_attn[head][idx2[head]]
+                th_attn = th_attn.reshape(nh, w_featmap, h_featmap).float()
+                # interpolate
+                th_attn = nn.functional.interpolate(th_attn.unsqueeze(0), scale_factor=args.patch_size, mode="nearest")[
+                    0].cpu().numpy()
+
+            attentions = attentions.reshape(nh, w_featmap, h_featmap)
+            attentions = nn.functional.interpolate(attentions.unsqueeze(0), scale_factor=args.patch_size, mode="nearest")[
                 0].cpu().numpy()
 
-        attentions = attentions.reshape(nh, w_featmap, h_featmap)
-        attentions = nn.functional.interpolate(attentions.unsqueeze(0), scale_factor=args.patch_size, mode="nearest")[
-            0].cpu().numpy()
-
-        objs = annotation_info['objects']
-        jacs = 0
-        if len(annotation_info['masks']) > 0:
-            mask = annotation_info['masks'][0]
-            unique = np.unique(mask).tolist()[1:-1]
-            if len(unique) == 0:
-                continue
-            #assert len(objs) == len(unique)
-            jac = 0
-            for o in unique:
-                masko = mask == o
-                intersection = masko * th_attn
-                intersection = torch.sum(torch.sum(intersection, dim=-1), dim=-1)
-                union = (masko + th_attn) > 0
-                union = torch.sum(torch.sum(union, dim=-1), dim=-1)
-                jaco = intersection / union
-                jac += max(jaco)
-            jac /= len(unique)
-            jacs += jac
-    print("Jaccard:", jacs.item())
-    #print("Jaccard:", sum(jacs) / len(jacs))
+            objs = annotation_info['objects']
+            jacs = 0
+            if len(annotation_info['masks']) > 0:
+                mask = annotation_info['masks'][0]
+                unique = np.unique(mask).tolist()[1:-1]
+                if len(unique) == 0:
+                    continue
+                #assert len(objs) == len(unique)
+                jac = 0
+                for o in unique:
+                    masko = mask == o
+                    intersection = masko * th_attn
+                    intersection = torch.sum(torch.sum(intersection, dim=-1), dim=-1)
+                    union = (masko + th_attn) > 0
+                    union = torch.sum(torch.sum(union, dim=-1), dim=-1)
+                    jaco = intersection / union
+                    jac += max(jaco)
+                jac /= len(unique)
+                jacs += jac
+        print("Jaccard:", jacs.item())
+        jaccards.append(jacs.item())
+    print(jaccards)
 
 
