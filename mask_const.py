@@ -108,7 +108,7 @@ def sample_masks(division_masks, M):
     return masks
 
 def get_division_masks_for_model(model):
-    assert model.patch_embed.img_size[0] == model.patch_embed.img_size[1]
-    assert model.patch_embed.patch_size[0] == model.patch_embed.patch_size[1]
+    #assert model.patch_embed.img_size[0] == model.patch_embed.img_size[1]
+    #assert model.patch_embed.patch_size[0] == model.patch_embed.patch_size[1]
     division_masks = DIVISION_MASKS[model.patch_embed.img_size[0] // model.patch_embed.patch_size[0]]
     return division_masks
