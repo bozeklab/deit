@@ -134,6 +134,7 @@ if __name__ == '__main__':
     jaccards = []
     for K in range(len(model.blocks)+1):
         print(f"Validation for: {K}")
+        jacs = 0
         for image_id in validation_image_list:
             annotation_file = os.path.join(annotations_dir, image_id + '.xml')
             annotation_info = parse_annotation_and_mask(annotation_file, masks_dir, args.image_size)
@@ -181,7 +182,6 @@ if __name__ == '__main__':
                 0].cpu().numpy()
 
             objs = annotation_info['objects']
-            jacs = 0
             if len(annotation_info['masks']) > 0:
                 mask = annotation_info['masks'][0]
                 unique = np.unique(mask).tolist()[1:-1]
