@@ -19,6 +19,7 @@ import torch.nn as nn
 import torchvision
 import numpy as np
 import models_v2
+import models_dino
 from pathlib import Path
 
 from timm.models import create_model
@@ -72,7 +73,7 @@ def parse_annotation_and_mask(annotation_path, masks_dir, img_size):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Visualize Self-Attention maps')
-    parser.add_argument('--model', default='deit_small_patch8_LS', type=str, metavar='MODEL',
+    parser.add_argument('--model', default='vit_small_8', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--patch_size', default=16, type=int, help='Patch resolution of the model.')
     parser.add_argument('--pretrained_weights', default='', type=str,
