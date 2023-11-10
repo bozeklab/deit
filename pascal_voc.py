@@ -200,8 +200,9 @@ if __name__ == '__main__':
                     jac += max(jaco)
                 jac /= len(unique)
                 jacs.append(jac.item())
-        print("Jaccard:", sum(jacs) / len(jacs))
-        jaccards.append(jacs.item())
+        J = sum(jacs) / len(jacs)
+        print("Jaccard:", J)
+        jaccards.append(J)
     print(jaccards)
 
 
