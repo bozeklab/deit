@@ -20,6 +20,7 @@ from functools import partial
 
 import torch
 import torch.nn as nn
+from timm.models import register_model
 
 from utils import trunc_normal_
 
@@ -316,6 +317,7 @@ def vit_small(patch_size=16, **kwargs):
         qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
     return model
 
+@register_model
 def vit_small_8(patch_size=8, **kwargs):
     model = VisionTransformer(
         patch_size=patch_size, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4,
