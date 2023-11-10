@@ -411,6 +411,7 @@ class vit_models(nn.Module):
 
     @property
     def last_attn(self):
+        print(self.blocks[-1].last_attn)
         return self.blocks[-1].last_attn
 
     def forward(self, x, K=0, masks=None, seq=False, cls_only=False):
