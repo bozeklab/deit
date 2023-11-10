@@ -156,7 +156,7 @@ if __name__ == '__main__':
                 masks = division_masks[16][0]
                 img = img.to(device, non_blocking=True)
                 _ = model.comp_forward_afterK(img, K=K, masks=masks, keep_token_order=True)
-            attentions = model.blocks[-1].last_attn
+            attentions = model.last_attn
             nh = attentions.shape[1]  # number of head
 
             # we keep only the output patch attention
