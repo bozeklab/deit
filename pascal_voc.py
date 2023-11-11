@@ -102,6 +102,8 @@ if __name__ == '__main__':
         num_classes=1000,
         img_size=args.image_size
     )
+    for p in model.parameters():
+        p.requires_grad = False
     model.eval()
     model = model.to(args.device)
 
