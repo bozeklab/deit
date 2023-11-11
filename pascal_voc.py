@@ -143,7 +143,7 @@ if __name__ == '__main__':
             annotation_info = parse_annotation_and_mask(annotation_file, masks_dir, args.image_size)
 
             image_path = os.path.join(dataset_dir, 'JPEGImages', annotation_info['image_path'])
-            #print(f'Image Path: {image_path}')
+            print(f'Image Path: {image_path}')
             #print(f'Width: {annotation_info["width"]}, Height: {annotation_info["height"]}')
 
             img = transform(Image.open(image_path))
@@ -186,7 +186,7 @@ if __name__ == '__main__':
 
             objs = annotation_info['objects']
             mask = annotation_info['masks'][0]
-            #print(mask)
+            print(mask)
             if len(np.unique(mask).tolist()[1:-1]) > 0:
                 unique = np.unique(mask).tolist()[1:-1]
             else:
