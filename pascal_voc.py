@@ -186,11 +186,12 @@ if __name__ == '__main__':
 
             objs = annotation_info['objects']
             mask = annotation_info['masks'][0]
-            print(mask)
-            if len(np.unique(mask).tolist()[1:-1]) > 0:
-                unique = np.unique(mask).tolist()[1:-1]
-            else:
-                unique = np.unique(mask).tolist()[:-1]
+            #print(mask)
+            unique = np.unique(mask).tolist()[:-1]
+            #if len(np.unique(mask).tolist()[1:-1]) > 0:
+            #    unique = np.unique(mask).tolist()[1:-1]
+            #else:
+            #    unique = np.unique(mask).tolist()[:-1]
             #if len(unique) == 0:
             #    continue
             #assert len(objs) == len(unique)
@@ -203,7 +204,7 @@ if __name__ == '__main__':
                 union = torch.sum(torch.sum(union, dim=-1), dim=-1)
                 jaco = intersection / union
                 jac += max(jaco)
-            jac /= (len(unique))
+            jac /= len(unique)
             jacs.append(jac.item())
         J = sum(jacs) / len(jacs)
         print("Jaccard:", J)
