@@ -187,6 +187,8 @@ if __name__ == '__main__':
 
             objs = annotation_info['objects']
             mask = annotation_info['masks'][0]
+            w, h = mask.shape[1] - mask.shape[1] % args.patch_size, mask.shape[2] - mask.shape[2] % args.patch_size
+            mask = mask[:, :w, :h]
             #print(mask)
             unique = np.unique(mask).tolist()[1:-1]
             #if len(np.unique(mask).tolist()[1:-1]) > 0:
