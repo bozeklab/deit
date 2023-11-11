@@ -58,11 +58,10 @@ def parse_annotation_and_mask(annotation_path, masks_dir, img_size):
 
         mask_file = os.path.join(masks_dir, image_path.replace('.jpg', '.png'))
         mask = Image.open(mask_file)
-        from torchvision import transforms
-        mask = transforms.Compose([transforms.Resize(img_size),
-                                   PILToTensor()])(mask)
+        #mask = transforms.Compose([#transforms.Resize(img_size),
+        #                           transforms.ToTensor()])(mask)
         #int_image = (mask * 255.0).to(torch.uint8)
-        masks.append(mask)
+        masks.append(PILToTensor()(mask))
 
     return {
         'image_path': image_path,
@@ -128,7 +127,7 @@ if __name__ == '__main__':
     masks_dir = os.path.join(dataset_dir, 'SegmentationClass')
 
     transform = pth_transforms.Compose([
-        pth_transforms.Resize(args.image_size),
+        #pth_transforms.Resize(args.image_size),
         pth_transforms.ToTensor(),
         pth_transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
     ])
@@ -191,8 +190,8 @@ if __name__ == '__main__':
 
             objs = annotation_info['objects']
             mask = annotation_info['masks'][0]
-            #w, h = mask.shape[1] - mask.shape[1] % args.patch_size, mask.shape[2] - mask.shape[2] % args.patch_size
-            #mask = mask[:, :w, :h]
+            w, h = mask.shape[1] - mask.shape[1] % args.patch_size, mask.shape[2] - mask.shape[2] % args.patch_size
+            mask = mask[:, :w, :h]
             #print(mask)
             unique = np.unique(mask).tolist()[1:-1]
             #if len(np.unique(mask).tolist()[1:-1]) > 0:
