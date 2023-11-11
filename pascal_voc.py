@@ -62,7 +62,6 @@ def parse_annotation_and_mask(annotation_path, masks_dir, img_size):
         #mask = transforms.Compose([#transforms.Resize(img_size),
         #                           transforms.ToTensor()])(mask)
         #int_image = (mask * 255.0).to(torch.uint8)
-        print(PILToTensor()(mask))
         masks.append(PILToTensor()(mask))
 
     return {
