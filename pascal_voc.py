@@ -186,7 +186,8 @@ if __name__ == '__main__':
 
             objs = annotation_info['objects']
             mask = annotation_info['masks'][0]
-            unique = np.unique(mask).tolist()[1:]
+            print(len(annotation_info['masks']))
+            unique = np.unique(mask).tolist()[1:-1]
             #if len(unique) == 0:
             #    continue
             #assert len(objs) == len(unique)
