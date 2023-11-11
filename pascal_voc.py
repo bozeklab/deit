@@ -122,7 +122,7 @@ if __name__ == '__main__':
     # open image
 
     dataset_dir = '/data/pwojcik/VOCdevkit/VOC2012/'
-    validation_image_set_file = os.path.join(dataset_dir, 'ImageSets/Segmentation/trainval.txt')
+    validation_image_set_file = os.path.join(dataset_dir, 'ImageSets/Main/train.txt')
     annotations_dir = os.path.join(dataset_dir, 'Annotations')
     masks_dir = os.path.join(dataset_dir, 'SegmentationClass')
 
