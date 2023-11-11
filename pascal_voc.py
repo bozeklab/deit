@@ -132,8 +132,8 @@ if __name__ == '__main__':
     with open(validation_image_set_file, 'r') as f:
         validation_image_list = f.read().strip().split('\n')
 
-    #torch.set_printoptions(threshold=10000)
-    #np.set_printoptions(threshold=np.inf)
+    torch.set_printoptions(threshold=10000)
+    np.set_printoptions(threshold=np.inf)
     jaccards = []
     for K in range(len(model.blocks)+1):
         print(f"Validation for: {K}")
@@ -186,6 +186,7 @@ if __name__ == '__main__':
 
             objs = annotation_info['objects']
             mask = annotation_info['masks'][0]
+            print(mask)
             if len(np.unique(mask).tolist()[1:-1]) > 0:
                 unique = np.unique(mask).tolist()[1:-1]
             else:
