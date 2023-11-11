@@ -100,7 +100,7 @@ if __name__ == '__main__':
         args.model,
         pretrained=False,
         num_classes=1000,
-        img_size=224
+        img_size=(224, 224)
     )
     for p in model.parameters():
         p.requires_grad = False
