@@ -102,6 +102,7 @@ if __name__ == '__main__':
         num_classes=1000,
         img_size=args.image_size
     )
+    model.eval()
     model = model.to(args.device)
 
     if args.checkpoint is not None:
