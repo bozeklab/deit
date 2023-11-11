@@ -57,10 +57,10 @@ def parse_annotation_and_mask(annotation_path, masks_dir, img_size):
         mask_file = os.path.join(masks_dir, image_path.replace('.jpg', '.png'))
         mask = Image.open(mask_file)
         from torchvision import transforms
-        mask = transforms.Compose([#transforms.Resize(img_size),
-                                   transforms.ToTensor()])(mask)
-        int_image = (mask * 255.0).to(torch.uint8)
-        masks.append(int_image)
+        #mask = transforms.Compose([#transforms.Resize(img_size),
+        #                           transforms.ToTensor()])(mask)
+        #int_image = (mask * 255.0).to(torch.uint8)
+        masks.append(torch.tensor(mask))
 
     return {
         'image_path': image_path,
