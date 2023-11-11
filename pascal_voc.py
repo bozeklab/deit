@@ -206,6 +206,8 @@ if __name__ == '__main__':
                 union = (masko + th_attn) > 0
                 union = torch.sum(torch.sum(union, dim=-1), dim=-1)
                 jaco = intersection / union
+                print('!!!')
+                print(jaco.shape)
                 jac += max(jaco)
             jac /= len(unique)
             jacs.append(jac.item())
