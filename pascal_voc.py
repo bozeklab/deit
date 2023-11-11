@@ -18,6 +18,8 @@ import torch
 import torch.nn as nn
 import torchvision
 import numpy as np
+from torchvision.transforms import PILToTensor
+
 import models_v2
 import models_dino
 from pathlib import Path
@@ -60,7 +62,8 @@ def parse_annotation_and_mask(annotation_path, masks_dir, img_size):
         #mask = transforms.Compose([#transforms.Resize(img_size),
         #                           transforms.ToTensor()])(mask)
         #int_image = (mask * 255.0).to(torch.uint8)
-        masks.append(torch.tensor(mask))
+        print(PILToTensor()(mask))
+        masks.append(PILToTensor()(mask))
 
     return {
         'image_path': image_path,
