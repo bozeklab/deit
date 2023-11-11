@@ -121,7 +121,7 @@ if __name__ == '__main__':
     dataset_dir = '/data/pwojcik/VOCdevkit/VOC2012/'
     validation_image_set_file = os.path.join(dataset_dir, 'ImageSets/Segmentation/val.txt')
     annotations_dir = os.path.join(dataset_dir, 'Annotations')
-    masks_dir = os.path.join(dataset_dir, 'SegmentationClass')
+    masks_dir = os.path.join(dataset_dir, 'SegmentationObject')
 
     transform = pth_transforms.Compose([
         #pth_transforms.Resize(args.image_size),
@@ -206,8 +206,6 @@ if __name__ == '__main__':
                 union = (masko + th_attn) > 0
                 union = torch.sum(torch.sum(union, dim=-1), dim=-1)
                 jaco = intersection / union
-                print('!!!')
-                print(jaco.shape)
                 jac += max(jaco)
             jac /= len(unique)
             jacs.append(jac.item())
