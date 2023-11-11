@@ -185,23 +185,22 @@ if __name__ == '__main__':
                 0].cpu().numpy()
 
             objs = annotation_info['objects']
-            if len(annotation_info['masks']) > 0:
-                mask = annotation_info['masks'][0]
-                unique = np.unique(mask).tolist()[1:-1]
-                if len(unique) == 0:
-                    continue
-                #assert len(objs) == len(unique)
-                jac = 0
-                for o in unique:
-                    masko = mask == o
-                    intersection = masko * th_attn
-                    intersection = torch.sum(torch.sum(intersection, dim=-1), dim=-1)
-                    union = (masko + th_attn) > 0
-                    union = torch.sum(torch.sum(union, dim=-1), dim=-1)
-                    jaco = intersection / union
-                    jac += max(jaco)
-                jac /= len(unique)
-                jacs.append(jac.item())
+            mask = annotation_info['masks'][0]
+            unique = np.unique(mask).tolist()[1:-1]
+            if len(unique) == 0:
+                continue
+            #assert len(objs) == len(unique)
+            jac = 0
+            for o in unique:
+                masko = mask == o
+                intersection = masko * th_attn
+                intersection = torch.sum(torch.sum(intersection, dim=-1), dim=-1)
+                union = (masko + th_attn) > 0
+                union = torch.sum(torch.sum(union, dim=-1), dim=-1)
+                jaco = intersection / union
+                jac += max(jaco)
+            jac /= len(unique)
+            jacs.append(jac.item())
         J = sum(jacs) / len(jacs)
         print("Jaccard:", J)
         jaccards.append(J)
