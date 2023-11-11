@@ -199,8 +199,8 @@ if __name__ == '__main__':
                 unique = np.unique(mask).tolist()[1:-1]
             else:
                 unique = np.unique(mask).tolist()[:-1]
-            if len(unique) == 0:
-                continue
+            #if len(unique) == 0:
+            #    continue
             #assert len(objs) == len(unique)
             jac = 0
             for o in unique:
