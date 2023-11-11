@@ -105,8 +105,8 @@ if __name__ == '__main__':
     model = model.to(args.device)
 
     if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint, map_location='cpu')['student']
-        pretrained_dict = {k.replace('module.backbone.', ''): v for k, v in checkpoint.items()}
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
+        pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
         #pretrained_dict['pos_embed'] = pretrained_dict['pos_embed'][:, 1:, :]
         utils.interpolate_pos_embed(model, pretrained_dict)
         msg = model.load_state_dict(pretrained_dict, strict=False)
@@ -184,7 +184,7 @@ if __name__ == '__main__':
             objs = annotation_info['objects']
             if len(annotation_info['masks']) > 0:
                 mask = annotation_info['masks'][0]
-                unique = np.unique(mask).tolist()[1:-1]
+                unique = np.unique(mask).tolist()#[1:-1]
                 if len(unique) == 0:
                     continue
                 #assert len(objs) == len(unique)
