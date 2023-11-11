@@ -111,7 +111,7 @@ if __name__ == '__main__':
         checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
         pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
         #pretrained_dict['pos_embed'] = pretrained_dict['pos_embed'][:, 1:, :]
-        utils.interpolate_pos_embed(model, pretrained_dict)
+        #utils.interpolate_pos_embed(model, pretrained_dict)
         msg = model.load_state_dict(pretrained_dict, strict=False)
         #utils.interpolate_pos_embed(model, checkpoint['model'])
         #msg = model.load_state_dict(checkpoint['model'])
@@ -187,13 +187,13 @@ if __name__ == '__main__':
             objs = annotation_info['objects']
             mask = annotation_info['masks'][0]
             #print(mask)
-            unique = np.unique(mask).tolist()[:-1]
+            unique = np.unique(mask).tolist()[1:-1]
             #if len(np.unique(mask).tolist()[1:-1]) > 0:
             #    unique = np.unique(mask).tolist()[1:-1]
             #else:
             #    unique = np.unique(mask).tolist()[:-1]
-            #if len(unique) == 0:
-            #    continue
+            if len(unique) == 0:
+                continue
             #assert len(objs) == len(unique)
             jac = 0
             for o in unique:
