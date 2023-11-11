@@ -146,14 +146,14 @@ if __name__ == '__main__':
             #print(f'Image Path: {image_path}')
             #print(f'Width: {annotation_info["width"]}, Height: {annotation_info["height"]}')
 
-            img = transform(Image.open(image_path))
-
             # make the image divisible by the patch size
             w, h = img.shape[1] - img.shape[1] % args.patch_size, img.shape[2] - img.shape[2] % args.patch_size
             img = img[:, :w, :h].unsqueeze(0)
 
             w_featmap = img.shape[-2] // args.patch_size
             h_featmap = img.shape[-1] // args.patch_size
+
+            img = transform(Image.open(image_path))
 
             division_masks = get_division_masks_for_model(model)
             #with torch.cuda.amp.autocast():
