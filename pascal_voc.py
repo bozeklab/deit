@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     if args.checkpoint is not None:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')['student']
-        retrained_dict = {k.replace('module.backbone.', ''): v for k, v in checkpoint.items()}
+        pretrained_dict = {k.replace('module.backbone.', ''): v for k, v in checkpoint.items()}
         #pretrained_dict['pos_embed'] = pretrained_dict['pos_embed'][:, 1:, :]
         utils.interpolate_pos_embed(model, pretrained_dict)
         msg = model.load_state_dict(pretrained_dict, strict=False)
