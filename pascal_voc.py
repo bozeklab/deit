@@ -57,7 +57,7 @@ def parse_annotation_and_mask(annotation_path, masks_dir, img_size):
         mask_file = os.path.join(masks_dir, image_path.replace('.jpg', '.png'))
         mask = Image.open(mask_file)
         from torchvision import transforms
-        mask = transforms.Compose([transforms.Resize(img_size),
+        mask = transforms.Compose([#transforms.Resize(img_size),
                                    transforms.ToTensor()])(mask)
         int_image = (mask * 255.0).to(torch.uint8)
         masks.append(int_image)
@@ -100,7 +100,7 @@ if __name__ == '__main__':
         args.model,
         pretrained=False,
         num_classes=1000,
-        img_size=args.image_size
+        img_size=224
     )
     for p in model.parameters():
         p.requires_grad = False
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     masks_dir = os.path.join(dataset_dir, 'SegmentationClass')
 
     transform = pth_transforms.Compose([
-        pth_transforms.Resize(args.image_size),
+        #pth_transforms.Resize(args.image_size),
         pth_transforms.ToTensor(),
         pth_transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
     ])
