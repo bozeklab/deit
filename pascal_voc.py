@@ -121,7 +121,7 @@ if __name__ == '__main__':
     dataset_dir = '/data/pwojcik/VOCdevkit/VOC2012/'
     validation_image_set_file = os.path.join(dataset_dir, 'ImageSets/Segmentation/val.txt')
     annotations_dir = os.path.join(dataset_dir, 'Annotations')
-    masks_dir = os.path.join(dataset_dir, 'SegmentationObject')
+    masks_dir = os.path.join(dataset_dir, 'SegmentationClass')
 
     transform = pth_transforms.Compose([
         #pth_transforms.Resize(args.image_size),
