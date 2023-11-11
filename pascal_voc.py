@@ -153,11 +153,11 @@ if __name__ == '__main__':
             h_featmap = img.shape[-1] // args.patch_size
 
             division_masks = get_division_masks_for_model(model)
-            with torch.cuda.amp.autocast():
-                masks = division_masks[16][0]
-                img = img.to(device, non_blocking=True)
-                _ = model.comp_forward_afterK(img, K=K, masks=masks)#, keep_token_order=True)
-            attentions = model.last_attn
+            #with torch.cuda.amp.autocast():
+            #    masks = division_masks[16][0]
+            #    img = img.to(device, non_blocking=True)
+            #    _ = model.comp_forward_afterK(img, K=K, masks=masks)#, keep_token_order=True)
+            attentions = model.get_last_selfattention(img.to(device))
             nh = attentions.shape[1]  # number of head
 
             # we keep only the output patch attention
