@@ -118,7 +118,7 @@ if __name__ == '__main__':
     dataset_dir = '/data/pwojcik/VOCdevkit/VOC2012/'
     validation_image_set_file = os.path.join(dataset_dir, 'ImageSets/Segmentation/val.txt')
     annotations_dir = os.path.join(dataset_dir, 'Annotations')
-    masks_dir = os.path.join(dataset_dir, 'SegmentationObject')
+    masks_dir = os.path.join(dataset_dir, 'SegmentationClass')
 
     transform = pth_transforms.Compose([
         pth_transforms.Resize(args.image_size),
@@ -184,7 +184,7 @@ if __name__ == '__main__':
             objs = annotation_info['objects']
             if len(annotation_info['masks']) > 0:
                 mask = annotation_info['masks'][0]
-                unique = np.unique(mask).tolist()[:-1]
+                unique = np.unique(mask).tolist()[1:-1]
                 if len(unique) == 0:
                     continue
                 #assert len(objs) == len(unique)
