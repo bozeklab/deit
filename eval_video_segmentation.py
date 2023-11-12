@@ -254,7 +254,7 @@ def color_normalize(x, mean=[0.485, 0.456, 0.406], std=[0.228, 0.224, 0.225]):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Evaluation with video object segmentation on DAVIS 2017')
-    parser.add_argument('--pretrained_weights', default='', type=str, help="Path to pretrained weights to evaluate.")
+    parser.add_argument('--checkpoint', default='', type=str, help="Path to pretrained weights to evaluate.")
     parser.add_argument('--arch', default='vit_small', type=str,
                         choices=['vit_tiny', 'vit_small', 'vit_base'], help='Architecture (support only ViT atm).')
     parser.add_argument('--patch_size', default=16, type=int, help='Patch resolution of the model.')
@@ -281,7 +281,17 @@ if __name__ == '__main__':
     )
     print(f"Model {args.arch} {args.patch_size}x{args.patch_size} built.")
     model.cuda()
-    utils.load_pretrained_weights(model, args.pretrained_weights, args.checkpoint_key, args.arch, args.patch_size)
+    if args.checkpoint is not None:
+        #checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
+        url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
+        pretrained_dict = torch.hub.load_state_dict_from_url(url=url)
+        #pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
+        #pretrained_dict['pos_embed'] = pretrained_dict['pos_embed'][:, 1:, :]
+        #utils.interpolate_pos_embed(model, pretrained_dict)
+        msg = model.load_state_dict(pretrained_dict, strict=False)
+        #utils.interpolate_pos_embed(model, checkpoint['model'])
+        #msg = model.load_state_dict(checkpoint['model'])
+        print("Loaded checkpoint: ", msg)
     for param in model.parameters():
         param.requires_grad = False
     model.eval()
