@@ -158,7 +158,7 @@ def extract_feature(model, frame, return_h_w=False):
     """Extract one frame feature everytime."""
     out = model.get_intermediate_layers(frame.unsqueeze(0).cuda(), n=1)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
-    h, w = int(frame.shape[1] / model.patch_embed.patch_size), int(frame.shape[2] / model.patch_embed.patch_size)
+    h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
     out = out[0].reshape(h, w, dim)
     out = out.reshape(-1, dim)
@@ -311,8 +311,6 @@ if __name__ == '__main__':
         video_name = video_name[:video_name.rfind('/')][1:]
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join(args.data_path, video_name)
-        print('!!!')
-        print(video_dir)
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
         first_seg, seg_ori = read_seg(seg_path, args.patch_size)
