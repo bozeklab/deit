@@ -312,6 +312,7 @@ if __name__ == '__main__':
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join('aaa', args.data_path, video_name)
         print('!!!')
+        print(os.path.join('aaa', args.data_path, video_name))
         print(video_dir)
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
