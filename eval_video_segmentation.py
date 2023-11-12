@@ -305,12 +305,11 @@ if __name__ == '__main__':
     color_palette = np.asarray(color_palette, dtype=np.uint8).reshape(-1, 3)
 
     video_list = open(os.path.join(args.data_path, "ImageSets/2017/val.txt")).readlines()
-    for i, video_name in enumerate(video_list):
+    for i, video_name in enumerate(video_list[:3]):
         video_name = video_name.strip()
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join(args.data_path, "JPEGImages/480p/", video_name)
         frame_list = read_frame_list(video_dir)
-        print(frame_list)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
         first_seg, seg_ori = read_seg(seg_path, args.patch_size)
         eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette)
