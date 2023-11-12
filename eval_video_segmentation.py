@@ -37,7 +37,7 @@ import utils
 
 
 @torch.no_grad()
-def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette):
+def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette, device='gpu'):
     """
     Evaluate tracking on a video given first frame & segmentation
     """
@@ -64,7 +64,7 @@ def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg
         used_segs = [first_seg] + [pair[1] for pair in list(que.queue)]
 
         frame_tar_avg, feat_tar, mask_neighborhood = label_propagation(args, model, frame_tar, used_frame_feats,
-                                                                       used_segs, mask_neighborhood)
+                                                                       used_segs, mask_neighborhood, device=device)
 
         # pop out oldest frame if neccessary
         if que.qsize() == args.n_last_frames:
@@ -86,7 +86,7 @@ def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg
         imwrite_indexed(os.path.join(video_folder, frame_nm), frame_tar_seg, color_palette)
 
 
-def restrict_neighborhood(h, w):
+def restrict_neighborhood(h, w, device='cuda'):
     # We restrict the set of source nodes considered to a spatial neighborhood of the query node (i.e. ``local attention'')
     mask = torch.zeros(h, w, h, w)
     for i in range(h):
@@ -100,7 +100,7 @@ def restrict_neighborhood(h, w):
                     mask[i, j, i - args.size_mask_neighborhood + p, j - args.size_mask_neighborhood + q] = 1
 
     mask = mask.reshape(h * w, h * w)
-    return mask.cuda(non_blocking=True)
+    return mask.device(device, non_blocking=True)
 
 
 def norm_mask(mask):
@@ -114,7 +114,7 @@ def norm_mask(mask):
     return mask
 
 
-def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_neighborhood=None):
+def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_neighborhood=None, device='cuda'):
     """
     propagate segs of frames in list_frames to frame_tar
     """
@@ -145,7 +145,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
     aff = aff / torch.sum(aff, keepdim=True, axis=0)
 
-    list_segs = [s.cuda() for s in list_segs]
+    list_segs = [s.device(device) for s in list_segs]
     segs = torch.cat(list_segs)
     nmb_context, C, h, w = segs.shape
     segs = segs.reshape(nmb_context, C, -1).transpose(2, 1).reshape(-1, C).T  # C x nmb_context*h*w
@@ -154,9 +154,9 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
     return seg_tar, return_feat_tar, mask_neighborhood
 
 
-def extract_feature(model, frame, return_h_w=False):
+def extract_feature(model, frame, return_h_w=False, device='cuda'):
     """Extract one frame feature everytime."""
-    out = model.get_intermediate_layers(frame.unsqueeze(0).cuda(), n=1)[0]
+    out = model.get_intermediate_layers(frame.unsqueeze(0).device(device), n=1)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
@@ -307,10 +307,15 @@ if __name__ == '__main__':
     video_list = open(os.path.join(args.data_path, "ImageSets/2017/val.txt")).readlines()
     # 28
     for i, video_name in enumerate(video_list[:29]):
+        if i == 28:
+            device = 'cpu'
+        else:
+            device = 'gpu'
+        model.device(device)
         video_name = video_name.strip()
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join(args.data_path, "JPEGImages/480p/", video_name)
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
         first_seg, seg_ori = read_seg(seg_path, args.patch_size)
-        eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette)
+        eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette, device=device)
