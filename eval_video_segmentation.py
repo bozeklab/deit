@@ -313,7 +313,7 @@ if __name__ == '__main__':
         video_dir = os.path.join('aaa', args.data_path, video_name)
         print('!!!')
         print(args.data_path)
-        print(os.path.join(args.data_path, video_name))
+        print(os.path.join(Path(args.data_path), video_name))
         print(video_dir)
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
