@@ -158,7 +158,6 @@ if __name__ == '__main__':
             w_featmap = img.shape[-2] // args.patch_size
             h_featmap = img.shape[-1] // args.patch_size
 
-
             division_masks = get_division_masks_for_model(model)
             #with torch.cuda.amp.autocast():
             #    masks = division_masks[16][0]
