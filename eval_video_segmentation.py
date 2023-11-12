@@ -193,6 +193,7 @@ def to_one_hot(y_tensor, n_dims=None):
 
 def read_frame_list(video_dir):
     frame_list = [img for img in glob.glob(os.path.join(video_dir, "*.jpg"))]
+
     frame_list = sorted(frame_list)
     return frame_list
 
@@ -304,6 +305,7 @@ if __name__ == '__main__':
 
     video_list = open(os.path.join(args.data_path, "ImageSets/480p/val.txt")).readlines()
     for i, video_name in enumerate(video_list):
+        video_name = video_name.split()[0]
         video_name = video_name.strip()
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join(args.data_path, "JPEGImages/480p/", video_name)
