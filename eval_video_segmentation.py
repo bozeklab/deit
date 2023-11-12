@@ -308,10 +308,11 @@ if __name__ == '__main__':
     for i, video_name in enumerate(video_list[28:29]):
         if i == 0:
             device = 'cpu'
+            model.cpu()
         else:
             device = 'cuda'
-        model.to(device)
-        print(model.device)
+            model.cuda()
+        #model.to(device)
         video_name = video_name.strip()
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join(args.data_path, "JPEGImages/480p/", video_name)
