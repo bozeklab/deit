@@ -285,10 +285,10 @@ if __name__ == '__main__':
     print(f"Model {args.arch} {args.patch_size}x{args.patch_size} built.")
     model.cuda()
     if args.checkpoint is not None:
-        #checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
-        url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
-        pretrained_dict = torch.hub.load_state_dict_from_url(url=url)
-        #pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
+        #url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
+        #pretrained_dict = torch.hub.load_state_dict_from_url(url=url)
+        pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
         #pretrained_dict['pos_embed'] = pretrained_dict['pos_embed'][:, 1:, :]
         #utils.interpolate_pos_embed(model, pretrained_dict)
         msg = model.load_state_dict(pretrained_dict, strict=False)
