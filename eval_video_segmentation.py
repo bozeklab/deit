@@ -145,7 +145,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
     aff = aff / torch.sum(aff, keepdim=True, axis=0)
 
-    list_segs = [s.cuda() for s in list_segs]
+    #list_segs = [s.cuda() for s in list_segs]
     segs = torch.cat(list_segs)
     nmb_context, C, h, w = segs.shape
     segs = segs.reshape(nmb_context, C, -1).transpose(2, 1).reshape(-1, C).T  # C x nmb_context*h*w
@@ -156,7 +156,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
 def extract_feature(model, frame, return_h_w=False):
     """Extract one frame feature everytime."""
-    out = model.get_intermediate_layers(frame.unsqueeze(0).cuda(), n=1)[0]
+    out = model.get_intermediate_layers(frame.unsqueeze(0), n=1)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
@@ -283,7 +283,7 @@ if __name__ == '__main__':
         img_size=(224, 224)
     )
     print(f"Model {args.arch} {args.patch_size}x{args.patch_size} built.")
-    model.cuda()
+    #model.cuda()
     if args.checkpoint is not None:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
         #url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
