@@ -134,7 +134,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
     if args.size_mask_neighborhood > 0:
         if mask_neighborhood is None:
-            mask_neighborhood = restrict_neighborhood(h, w)
+            mask_neighborhood = restrict_neighborhood(h, w, device=device)
             mask_neighborhood = mask_neighborhood.unsqueeze(0).repeat(ncontext, 1, 1)
         aff *= mask_neighborhood
 
@@ -305,8 +305,8 @@ if __name__ == '__main__':
 
     video_list = open(os.path.join(args.data_path, "ImageSets/2017/val.txt")).readlines()
     # 28
-    for i, video_name in enumerate(video_list[:29]):
-        if i == 28:
+    for i, video_name in enumerate(video_list[28:29]):
+        if i == 0:
             device = 'cpu'
         else:
             device = 'cuda'
