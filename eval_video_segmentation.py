@@ -309,6 +309,10 @@ if __name__ == '__main__':
         if i == 0:
             device = 'cpu'
             model.cpu()
+            first_param_device = next(model.parameters()).device
+            is_model_on_cpu = first_param_device.type == 'cpu'
+
+            print("Is model on CPU?", is_model_on_cpu)
         else:
             device = 'cuda'
             model.cuda()
