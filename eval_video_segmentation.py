@@ -100,7 +100,7 @@ def restrict_neighborhood(h, w, device='cuda'):
                     mask[i, j, i - args.size_mask_neighborhood + p, j - args.size_mask_neighborhood + q] = 1
 
     mask = mask.reshape(h * w, h * w)
-    return mask.device(device, non_blocking=True)
+    return mask.to(device, non_blocking=True)
 
 
 def norm_mask(mask):
@@ -145,7 +145,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
     aff = aff / torch.sum(aff, keepdim=True, axis=0)
 
-    list_segs = [s.device(device) for s in list_segs]
+    list_segs = [s.to(device) for s in list_segs]
     segs = torch.cat(list_segs)
     nmb_context, C, h, w = segs.shape
     segs = segs.reshape(nmb_context, C, -1).transpose(2, 1).reshape(-1, C).T  # C x nmb_context*h*w
@@ -156,7 +156,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
 def extract_feature(model, frame, return_h_w=False, device='cuda'):
     """Extract one frame feature everytime."""
-    out = model.get_intermediate_layers(frame.unsqueeze(0).device(device), n=1)[0]
+    out = model.get_intermediate_layers(frame.unsqueeze(0).to(device), n=1)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
