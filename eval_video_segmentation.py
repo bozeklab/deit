@@ -50,7 +50,7 @@ def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg
     # first frame
     frame1, ori_h, ori_w = read_frame(frame_list[0])
     # extract first frame feature
-    frame1_feat = extract_feature(model, frame1).T  # dim x h*w
+    frame1_feat = extract_feature(model, frame1, device=device).T  # dim x h*w
 
     # saving first segmentation
     out_path = os.path.join(video_folder, "00000.png")
