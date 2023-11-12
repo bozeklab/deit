@@ -192,6 +192,8 @@ def to_one_hot(y_tensor, n_dims=None):
 
 
 def read_frame_list(video_dir):
+    print('!!!')
+    print(video_dir)
     frame_list = [img for img in glob.glob(os.path.join(video_dir, "*.jpg"))]
 
     frame_list = sorted(frame_list)
