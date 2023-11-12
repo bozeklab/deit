@@ -305,7 +305,7 @@ if __name__ == '__main__':
     color_palette = np.asarray(color_palette, dtype=np.uint8).reshape(-1, 3)
 
     video_list = open(os.path.join(args.data_path, "ImageSets/2017/val.txt")).readlines()
-    for i, video_name in enumerate(video_list)[27:29]:
+    for i, video_name in enumerate(video_list[27:29]):
         video_name = video_name.strip()
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join(args.data_path, "JPEGImages/480p/", video_name)
