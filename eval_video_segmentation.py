@@ -308,12 +308,10 @@ if __name__ == '__main__':
     for i, video_name in enumerate(video_list):
         video_name = video_name.split()[0]
         video_name = video_name.strip()
-        video_name = video_name[:video_name.rfind('/')]
+        video_name = video_name[:video_name.rfind('/')][1:]
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
-        video_dir = os.path.join('aaa', args.data_path, video_name)
+        video_dir = os.path.join(args.data_path, video_name)
         print('!!!')
-        print(args.data_path)
-        print(os.path.join(Path(args.data_path), video_name))
         print(video_dir)
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
