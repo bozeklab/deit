@@ -283,7 +283,6 @@ if __name__ == '__main__':
         img_size=(224, 224)
     )
     print(f"Model {args.arch} {args.patch_size}x{args.patch_size} built.")
-    model.cuda()
     if args.checkpoint is not None:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
         #url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
@@ -311,7 +310,7 @@ if __name__ == '__main__':
             device = 'cpu'
         else:
             device = 'gpu'
-        model.device(device)
+        model.to(device)
         video_name = video_name.strip()
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join(args.data_path, "JPEGImages/480p/", video_name)
