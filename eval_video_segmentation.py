@@ -100,7 +100,7 @@ def restrict_neighborhood(h, w):
                     mask[i, j, i - args.size_mask_neighborhood + p, j - args.size_mask_neighborhood + q] = 1
 
     mask = mask.reshape(h * w, h * w)
-    return mask.cuda(non_blocking=True)
+    return mask#.cuda(non_blocking=True)
 
 
 def norm_mask(mask):
