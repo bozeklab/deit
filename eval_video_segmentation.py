@@ -33,7 +33,6 @@ from PIL import Image
 from torchvision import transforms
 
 import utils
-import vision_transformer as vits
 
 
 @torch.no_grad()
