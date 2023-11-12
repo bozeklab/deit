@@ -18,6 +18,7 @@ import os
 import copy
 import glob
 import queue
+from pathlib import Path
 from urllib.request import urlopen
 import argparse
 import numpy as np
@@ -309,7 +310,7 @@ if __name__ == '__main__':
         video_name = video_name.strip()
         video_name = video_name[:video_name.rfind('/')]
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
-        video_dir = os.path.join(args.data_path, video_name)
+        video_dir = os.path.join(Path(args.data_path), Path(video_name))
         print(args.data_path, video_dir, video_name)
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
