@@ -37,7 +37,7 @@ import utils
 
 
 @torch.no_grad()
-def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette, device='gpu'):
+def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette, device='cuda'):
     """
     Evaluate tracking on a video given first frame & segmentation
     """
@@ -309,7 +309,7 @@ if __name__ == '__main__':
         if i == 28:
             device = 'cpu'
         else:
-            device = 'gpu'
+            device = 'cuda'
         model.to(device)
         video_name = video_name.strip()
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
