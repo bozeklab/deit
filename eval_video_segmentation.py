@@ -310,8 +310,8 @@ if __name__ == '__main__':
         video_name = video_name.strip()
         video_name = video_name[:video_name.rfind('/')]
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
-        video_dir = os.path.join(Path(args.data_path), Path(video_name))
-        print(args.data_path, video_dir, video_name)
+        video_dir = os.path.join(Path(args.data_path), video_name)
+        print(video_name)
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
         first_seg, seg_ori = read_seg(seg_path, args.patch_size)
