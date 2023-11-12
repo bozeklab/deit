@@ -302,7 +302,7 @@ if __name__ == '__main__':
         color_palette.append([int(i) for i in line.decode("utf-8").split('\n')[0].split(" ")])
     color_palette = np.asarray(color_palette, dtype=np.uint8).reshape(-1, 3)
 
-    video_list = open(os.path.join(args.data_path, "ImageSets/2017/480p/val.txt")).readlines()
+    video_list = open(os.path.join(args.data_path, "ImageSets/480p/val.txt")).readlines()
     for i, video_name in enumerate(video_list):
         video_name = video_name.strip()
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
