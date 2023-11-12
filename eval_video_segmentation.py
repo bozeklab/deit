@@ -312,6 +312,7 @@ if __name__ == '__main__':
         print(f'[{i}/{len(video_list)}] Begin to segmentate video {video_name}.')
         video_dir = os.path.join('aaa', args.data_path, video_name)
         print('!!!')
+        print(args.data_path)
         print(os.path.join(args.data_path, video_name))
         print(video_dir)
         frame_list = read_frame_list(video_dir)
