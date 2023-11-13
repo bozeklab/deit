@@ -159,7 +159,7 @@ def extract_feature(model, frame, device, return_h_w=False):
     """Extract one frame feature everytime."""
     division_masks = get_division_masks_for_model(model)
     masks = division_masks[16][0]
-    out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=0, masks=masks, n=1)[0]
+    out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=4, masks=masks, n=1)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
