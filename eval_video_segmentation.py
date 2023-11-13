@@ -308,11 +308,10 @@ if __name__ == '__main__':
 
     video_list = open(os.path.join(args.data_path, "ImageSets/2017/val.txt")).readlines()
     # 28
-    for i, video_name in enumerate(video_list[27:]):
-        if i == 1:
+    for i, video_name in enumerate(video_list):
+        if i == 28:
             device = 'cpu'
             model.cpu()
-
         else:
             device = 'cuda'
             model.cuda()
