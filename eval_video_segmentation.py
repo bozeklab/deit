@@ -283,7 +283,7 @@ if __name__ == '__main__':
         args.model,
         pretrained=False,
         num_classes=1000,
-        img_size=(224, 224)
+        img_size=(480, 480)
     )
     print(f"Model {args.arch} {args.patch_size}x{args.patch_size} built.")
     if args.checkpoint is not None:
