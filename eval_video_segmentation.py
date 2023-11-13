@@ -50,6 +50,8 @@ def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg
     # first frame
     frame1, ori_h, ori_w = read_frame(frame_list[0])
     # extract first frame feature
+    print('!!!!')
+    print(device)
     frame1_feat = extract_feature(model, frame1, device=device).T  # dim x h*w
 
     # saving first segmentation
@@ -156,7 +158,6 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
 def extract_feature(model, frame, return_h_w=False, device='cuda'):
     """Extract one frame feature everytime."""
-    print(device)
     out = model.get_intermediate_layers(frame.unsqueeze(0).to(device), n=1)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
