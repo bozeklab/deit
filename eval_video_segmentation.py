@@ -157,6 +157,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
 def extract_feature(model, frame, device, return_h_w=False):
     """Extract one frame feature everytime."""
+    print(frame.shape)
     if frame.shape[1] == 832:
         division_masks = DIVISION_SPECS_832[16]
     elif frame.shape[1] == 896:
