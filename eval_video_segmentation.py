@@ -159,6 +159,11 @@ def extract_feature(model, frame, return_h_w=False, device='cuda'):
     out = model.get_intermediate_layers(frame.unsqueeze(0).to(device), n=1)[0]
     print('!!!')
     print(out.device)
+
+    first_param_device = next(model.parameters()).device
+    is_model_on_cpu = first_param_device.type == 'cpu'
+
+    print("Is model on CPU?", is_model_on_cpu)
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
@@ -311,10 +316,7 @@ if __name__ == '__main__':
         if i == 0:
             device = 'cpu'
             model.cpu()
-            first_param_device = next(model.parameters()).device
-            is_model_on_cpu = first_param_device.type == 'cpu'
 
-            print("Is model on CPU?", is_model_on_cpu)
         else:
             device = 'cuda'
             model.cuda()
