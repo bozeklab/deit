@@ -157,6 +157,8 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
 def extract_feature(model, frame, device, return_h_w=False):
     """Extract one frame feature everytime."""
+    print('!!!')
+    print(frame.shape)
     division_masks = DIVISION_MASKS[480 // model.patch_embed.patch_size[0]]
     masks = division_masks[16][0]
     out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=4, masks=masks, n=1)[0]
