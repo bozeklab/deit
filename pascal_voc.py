@@ -121,7 +121,7 @@ if __name__ == '__main__':
         print("Loaded checkpoint: ", msg)
         #utils.interpolate_pos_embed(model, checkpoint['model'])
         #msg = model.load_state_dict(checkpoint['model'])
-        print("Loaded checkpoint: ", msg)
+        #print("Loaded checkpoint: ", msg)
     # open image
 
     dataset_dir = '/data/pwojcik/VOCdevkit/VOC2012/'
@@ -167,7 +167,7 @@ if __name__ == '__main__':
                 img = img.to(device, non_blocking=True)
                 _ = model.comp_forward_afterK(img, K=K, masks=masks)#, keep_token_order=True)
             #attentions = model.get_last_selfattention(img.to(device))
-            attentions = model.last_attn[11]
+            attentions = model.last_attn#[11]
             nh = attentions.shape[1]  # number of head
 
             # we keep only the output patch attention
