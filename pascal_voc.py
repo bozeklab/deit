@@ -26,7 +26,7 @@ from pathlib import Path
 
 from timm.models import create_model
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from torchvision import transforms as pth_transforms, transforms
+from torchvision import transforms as pth_transforms
 import numpy as np
 from PIL import Image
 import utils
@@ -58,8 +58,8 @@ def parse_annotation_and_mask(annotation_path, masks_dir, img_size):
 
         mask_file = os.path.join(masks_dir, image_path.replace('.jpg', '.png'))
         mask = Image.open(mask_file)
-        mask = transforms.Compose([transforms.Resize(img_size),
-                                   transforms.ToTensor()])(mask)
+        mask = pth_transforms.Compose([pth_transforms.transforms.Resize(img_size),
+                                       pth_transforms.transforms.ToTensor()])(mask)
         int_image = (mask * 255.0).to(torch.uint8)
         masks.append(int_image)
         #masks.append(PILToTensor()(mask))
