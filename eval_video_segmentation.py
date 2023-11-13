@@ -119,7 +119,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
     propagate segs of frames in list_frames to frame_tar
     """
     ## we only need to extract feature of the target frame
-    feat_tar, h, w = extract_feature(model, frame_tar, return_h_w=True)
+    feat_tar, h, w = extract_feature(model, frame_tar, device, return_h_w=True)
 
     return_feat_tar = feat_tar.T  # dim x h*w
 
