@@ -158,6 +158,8 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
 def extract_feature(model, frame, device, return_h_w=False):
     """Extract one frame feature everytime."""
+    print('!!!')
+    print(frame.shape)
     if frame.shape[2] == 832:
         division_masks = DIVISION_SPECS_832
     elif frame.shape[2] == 896:
@@ -313,7 +315,7 @@ if __name__ == '__main__':
 
     video_list = open(os.path.join(args.data_path, "ImageSets/2017/val.txt")).readlines()
     # 28
-    for i, video_name in enumerate(video_list):
+    for i, video_name in enumerate(video_list)[:27]:
         if i == 28:
             device = 'cpu'
             model.cpu()
