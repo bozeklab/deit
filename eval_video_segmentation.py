@@ -166,7 +166,7 @@ def extract_feature(model, frame, device, return_h_w=False):
         division_masks = DIVISION_SPECS_1152
     #division_masks = DIVISION_MASKS[480 // model.patch_embed.patch_size[0]]
     masks = division_masks_from_spec(division_masks)[16][0]
-    out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=4, masks=masks, n=1)[0]
+    out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=2, masks=masks, n=1)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
@@ -316,7 +316,7 @@ if __name__ == '__main__':
     video_list = open(os.path.join(args.data_path, "ImageSets/2017/val.txt")).readlines()
     # 28
     for i, video_name in enumerate(video_list):
-        if (i == 28) or (i == 30):
+        if i == 28:
             device = 'cpu'
             model.cpu()
         else:
