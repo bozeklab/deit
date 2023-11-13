@@ -413,6 +413,15 @@ class vit_models(nn.Module):
     def last_attn(self):
         return self.blocks[-1].attn.last_attn
 
+    def get_last_selfattention(self, x):
+        x = self.prepare_tokens(x)
+        for i, blk in enumerate(self.blocks):
+            if i < len(self.blocks) - 1:
+                x = blk(x)
+            else:
+                # return attention of the last block
+                return blk(x, return_attention=True)
+
     def forward(self, x, K=0, masks=None, seq=False, cls_only=False):
         if seq:
             x = self.comp_seq(x, K, masks)

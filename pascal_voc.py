@@ -26,7 +26,7 @@ from pathlib import Path
 
 from timm.models import create_model
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from torchvision import transforms as pth_transforms
+from torchvision import transforms as pth_transforms, transforms
 import numpy as np
 from PIL import Image
 import utils
@@ -58,10 +58,11 @@ def parse_annotation_and_mask(annotation_path, masks_dir, img_size):
 
         mask_file = os.path.join(masks_dir, image_path.replace('.jpg', '.png'))
         mask = Image.open(mask_file)
-        #mask = transforms.Compose([#transforms.Resize(img_size),
-        #                           transforms.ToTensor()])(mask)
-        #int_image = (mask * 255.0).to(torch.uint8)
-        masks.append(PILToTensor()(mask))
+        mask = transforms.Compose([transforms.Resize(img_size),
+                                   transforms.ToTensor()])(mask)
+        int_image = (mask * 255.0).to(torch.uint8)
+        masks.append(int_image)
+        #masks.append(PILToTensor()(mask))
 
     return {
         'image_path': image_path,
@@ -109,13 +110,15 @@ if __name__ == '__main__':
     model = model.to(args.device)
 
     if args.checkpoint is not None:
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')
         #checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
-        url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
-        pretrained_dict = torch.hub.load_state_dict_from_url(url=url)
+        #url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
+        #pretrained_dict = torch.hub.load_state_dict_from_url(url=url)
         #pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
-        #pretrained_dict['pos_embed'] = pretrained_dict['pos_embed'][:, 1:, :]
-        #utils.interpolate_pos_embed(model, pretrained_dict)
-        msg = model.load_state_dict(pretrained_dict, strict=False)
+        #checkpoint = torch.load(args.checkpoint, map_location='cpu')
+        utils.interpolate_pos_embed(model, checkpoint['model'])
+        msg = model.load_state_dict(checkpoint['model'])
+        print("Loaded checkpoint: ", msg)
         #utils.interpolate_pos_embed(model, checkpoint['model'])
         #msg = model.load_state_dict(checkpoint['model'])
         print("Loaded checkpoint: ", msg)
@@ -127,7 +130,7 @@ if __name__ == '__main__':
     masks_dir = os.path.join(dataset_dir, 'SegmentationClass')
 
     transform = pth_transforms.Compose([
-        #pth_transforms.Resize(args.image_size),
+        pth_transforms.Resize(args.image_size),
         pth_transforms.ToTensor(),
         pth_transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
     ])
@@ -159,11 +162,12 @@ if __name__ == '__main__':
             h_featmap = img.shape[-1] // args.patch_size
 
             division_masks = get_division_masks_for_model(model)
-            #with torch.cuda.amp.autocast():
-            #    masks = division_masks[16][0]
-            #    img = img.to(device, non_blocking=True)
-            #    _ = model.comp_forward_afterK(img, K=K, masks=masks)#, keep_token_order=True)
-            attentions = model.get_last_selfattention(img.to(device))
+            with torch.cuda.amp.autocast():
+                masks = division_masks[16][0]
+                img = img.to(device, non_blocking=True)
+                _ = model.comp_forward_afterK(img, K=K, masks=masks)#, keep_token_order=True)
+            #attentions = model.get_last_selfattention(img.to(device))
+            attentions = model.last_attn[11]
             nh = attentions.shape[1]  # number of head
 
             # we keep only the output patch attention
