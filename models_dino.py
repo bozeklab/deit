@@ -335,6 +335,7 @@ class VisionTransformer(nn.Module):
 
         output = []
         for i, blk in enumerate(self.blocks[K:]):
+            x = blk(x)
             if len(self.blocks[K:]) - i <= n:
                 output.append(self.norm(x))
 
