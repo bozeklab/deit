@@ -94,6 +94,10 @@ DIVISION_SPECS_896 = {
     16: {"xs": [16, 14, 14, 16], "ys": [28, 28, 28, 28]},
 }
 
+DIVISION_SPECS_1152 = {
+    16: {"xs": [16, 14, 14, 16], "ys": [36, 36, 36, 36]},
+}
+
 DIVISION_MASKS = {
     12: division_masks_from_spec(DIVISION_SPECS_12_12),
     14: division_masks_from_spec(DIVISION_SPECS_14_14),
