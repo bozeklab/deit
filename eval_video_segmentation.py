@@ -34,6 +34,7 @@ from PIL import Image
 from torchvision import transforms
 
 import utils
+from mask_const import get_division_masks_for_model
 
 
 @torch.no_grad()
@@ -156,7 +157,9 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
 def extract_feature(model, frame, device, return_h_w=False):
     """Extract one frame feature everytime."""
-    out = model.get_intermediate_layers(frame.unsqueeze(0).to(device), n=1)[0]
+    division_masks = get_division_masks_for_model(model)
+    masks = division_masks[16][0]
+    out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=0, masks=masks, n=1)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
@@ -305,7 +308,7 @@ if __name__ == '__main__':
 
     video_list = open(os.path.join(args.data_path, "ImageSets/2017/val.txt")).readlines()
     # 28
-    for i, video_name in enumerate(video_list[27:29]):
+    for i, video_name in enumerate(video_list[27:]):
         if i == 1:
             device = 'cpu'
             model.cpu()
