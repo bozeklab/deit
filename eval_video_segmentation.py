@@ -157,6 +157,8 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 def extract_feature(model, frame, return_h_w=False, device='cuda'):
     """Extract one frame feature everytime."""
     out = model.get_intermediate_layers(frame.unsqueeze(0).to(device), n=1)[0]
+    print('!!!')
+    print(out.device)
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
