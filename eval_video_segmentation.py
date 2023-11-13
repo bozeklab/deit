@@ -35,7 +35,7 @@ from torchvision import transforms
 
 import utils
 from mask_const import get_division_masks_for_model, DIVISION_MASKS, DIVISION_SPECS_832, DIVISION_SPECS_896, \
-    division_masks_from_spec
+    division_masks_from_spec, DIVISION_SPECS_1152
 
 
 @torch.no_grad()
@@ -158,12 +158,12 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
 
 def extract_feature(model, frame, device, return_h_w=False):
     """Extract one frame feature everytime."""
-    print('!!!')
-    print(frame.shape)
     if frame.shape[2] == 832:
         division_masks = DIVISION_SPECS_832
     elif frame.shape[2] == 896:
         division_masks = DIVISION_SPECS_896
+    elif frame.shape[2] == 1152:
+        division_masks = DIVISION_SPECS_1152
     #division_masks = DIVISION_MASKS[480 // model.patch_embed.patch_size[0]]
     masks = division_masks_from_spec(division_masks)[16][0]
     out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=4, masks=masks, n=1)[0]
