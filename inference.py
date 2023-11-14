@@ -339,6 +339,8 @@ def main(args):
 
 
 if __name__ == '__main__':
+    import torch.multiprocessing
+    torch.multiprocessing.set_sharing_strategy('file_system')
     parser = argparse.ArgumentParser('Evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     main(args)
