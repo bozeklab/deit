@@ -130,7 +130,7 @@ def extract(data_loader, model, device, KMs, random_masks, seq: bool=False):
                     masks = sample_masks(division_masks, m)
                 else:
                     masks = division_masks[m][0]
-                features = model(images, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
+                features = model(images, K=k, masks=masks).cpu().numpy()
                 ret[f"{k}_{m}"]["features"].append(features)
                 ret[f"{k}_{m}"]["targets"].append(targets)
 
