@@ -281,7 +281,7 @@ def main_setup(args):
         args.model,
         pretrained=False,
         num_classes=nb_classes,
-        img_size=args.input_size
+        img_size=(args.input_size, args.input_size)
     )
     model = model.to(args.device)
     model_without_ddp = model
