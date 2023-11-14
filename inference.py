@@ -10,6 +10,7 @@ from timm.utils import accuracy
 import numpy as np
 import models
 import models_v2
+import models_dino
 from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS
 from functools import partial
 from fvcore.nn import FlopCountAnalysis
@@ -19,7 +20,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Script containing tasks with inference only', add_help=False)
     parser.add_argument('--batch-size', default=64, type=int)
     # Model parameters
-    parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
+    parser.add_argument('--model', default='vit_small_8', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--input_size', default=224, type=int, help='images input size')
     parser.add_argument('--eval-crop-ratio', default=1., type=float, help="Crop ratio for evaluation")
@@ -290,9 +291,10 @@ def main_setup(args):
         model_without_ddp = model.module
     
     if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint, map_location='cpu')
-        msg = model_without_ddp.load_state_dict(checkpoint['model'])
-        print(msg)
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
+        pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
+        msg = model.load_state_dict(pretrained_dict, strict=False)
+        print("Loaded checkpoint: ", msg)
 
     return model, data_loader, nb_classes, output_dir
 
