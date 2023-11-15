@@ -15,6 +15,8 @@ import utils
 
 @torch.no_grad()
 def knn_classifier(train_features, train_labels, test_features, test_labels, k, T, num_classes=1000):
+    train_features = nn.functional.normalize(train_features, dim=1, p=2)
+    test_features = nn.functional.normalize(test_features, dim=1, p=2)
     top1, top5, total = 0.0, 0.0, 0
     train_features = train_features.t()
     num_test_images, num_chunks = test_labels.shape[0], 100
