@@ -59,8 +59,8 @@ def knn_classifier(train_features, train_labels, test_features, test_labels, k, 
 if __name__ == '__main__':
     nb_knn = 20
     temperature = 0.07
-    train_path = '/data/pwojcik/deit/dino_tore_in1k_train/0_16.npz'
-    test_path = '/data/pwojcik/deit/dino_tore_in1k_val/0_16.npz'
+    train_path = '/data/pwojcik/deit/dino_tore_in1k_train/extract_k16/0_16.npz'
+    test_path = '/data/pwojcik/deit/dino_tore_in1k_val/extract_k16/0_16.npz'
     train_features = np.load(train_path)['features']
     train_labels = np.load(train_path)['targets']
 
