@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
         test_features = torch.tensor(np.load(test_path)['features']).cuda()
         test_labels = torch.tensor(np.load(test_path)['targets']).cuda()
-        print('Loaded features')
+        #print('Loaded features')
         for nb_knn in [10, 20, 100, 200]:
             top1, top5 = knn_classifier(train_features, train_labels,
                                         test_features, test_labels, nb_knn, temperature)
