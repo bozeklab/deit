@@ -20,6 +20,13 @@ def plot_accuracy(list1, list2):
     # Adding a legend
     ax.legend()
 
+    # Set y-axis ticks to display only three values (80, 70, 60)
+    y_ticks = [60, 70, 80]
+    ax.set_yticks(y_ticks)
+
+    # Set y-axis limits to slightly extend above the top
+    ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1] + 1)
+
     # Save the plot as PNG
     plt.savefig('knn_plot.png')
 
