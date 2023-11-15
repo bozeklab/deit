@@ -60,7 +60,7 @@ def knn_classifier(train_features, train_labels, test_features, test_labels, k, 
 
 if __name__ == '__main__':
     temperature = 0.07
-    for kappa in range(0, 12):
+    for kappa in range(0, 13):
         train_path = f"/data/pwojcik/deit/dino_tore_in1k_train/extract_k16/{kappa}_16.npz"
         test_path = f"/data/pwojcik/deit/dino_tore_in1k_val/extract_k16/{kappa}_16.npz"
 
