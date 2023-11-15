@@ -62,6 +62,7 @@ if __name__ == '__main__':
     train_path = '/data/pwojcik/deit/dino_in1k_train/extract_k16/0_16.npz'
     test_path = '/data/pwojcik/deit/dino_in1k_val/extract_k16/0_16.npz'
     train_features = torch.tensor(np.load(train_path)['features']).cuda()
+    print(train_features.shape)
     train_labels = torch.tensor(np.load(train_path)['targets']).cuda()
 
     test_features = torch.tensor(np.load(test_path)['features']).cuda()
