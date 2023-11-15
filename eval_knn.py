@@ -61,11 +61,12 @@ if __name__ == '__main__':
     temperature = 0.07
     train_path = '/data/pwojcik/deit/dino_tore_in1k_train/extract_k16/0_16.npz'
     test_path = '/data/pwojcik/deit/dino_tore_in1k_val/extract_k16/0_16.npz'
-    train_features = torch.tensor(np.load(train_path)['features'])
-    train_labels = torch.tensor(np.load(train_path)['targets'])
+    train_features = torch.tensor(np.load(train_path)['features']).cuda()
+    train_labels = torch.tensor(np.load(train_path)['targets']).cuda()
 
-    test_features = torch.tensor(np.load(test_path)['features'])
-    test_labels = torch.tensor(np.load(test_path)['targets'])
+    test_features = torch.tensor(np.load(test_path)['features']).cuda()
+    test_labels = torch.tensor(np.load(test_path)['targets']).cuda()
+    print('Loaded features')
     top1, top5 = knn_classifier(train_features, train_labels,
                                 test_features, test_labels, nb_knn, temperature)
     print(f"{nb_knn}-NN classifier result: Top1: {top1}, Top5: {top5}")
