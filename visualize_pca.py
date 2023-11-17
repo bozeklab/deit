@@ -194,7 +194,7 @@ def tsne(features, k, classes_to_render):
     #plt.style.use('dark_background')
 
     fig = plt.figure()
-    plt.scatter(*embd_ncvis.T, c=y, alpha=0.7, s=3.5, cmap="coolwarm", edgecolor="none")
+    plt.scatter(*embd_ncvis.T, c=y, alpha=0.8, s=3.5, cmap="Set1", edgecolor="none")
     plt.title(f"$\kappa$={k}")
     plt.gca().set_aspect("equal")
     plt.axis("off")
