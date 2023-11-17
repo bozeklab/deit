@@ -217,7 +217,7 @@ def default_transform_dataset(is_train, args):
     transform = transforms.Compose(t)
 
     if args.data_set == 'CIFAR100':
-        dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform)
+        dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform, download=True)
         nb_classes = 100
     if args.data_set == 'CIFAR10':
         dataset = datasets.CIFAR10(args.data_path, train=is_train, transform=transform)
