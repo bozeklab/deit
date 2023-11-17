@@ -196,7 +196,7 @@ def tsne(features, k, classes_to_render):
     plt.title(f"M=16, K={k}")
     plt.gca().set_aspect("equal")
     plt.axis("off")
-    fig.savefig(f"dino_tsne_{k}.png")
+    fig.savefig(f"dino_tore_tsne_{k}.png")
 
 
 
