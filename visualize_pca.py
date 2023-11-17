@@ -166,9 +166,9 @@ in1k_classes = {
 
 def tsne(features, k, classes_to_render):
     import cne
-    targets = features['targets']
+    y = features['targets']
     features = features['features']
-    nn.functional.normalize(torch.tensor(features), dim=1, p=2).numpy()
+    x = nn.functional.normalize(torch.tensor(features), dim=1, p=2).numpy()
 
     import random
     random_numbers = [random.randint(0, 999) for _ in range(50)]
