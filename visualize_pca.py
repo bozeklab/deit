@@ -256,7 +256,7 @@ def main(args):
 
     #ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
     for k in [0, 4]:
-        features = np.load(f"/data/pwojcik/deit/dino_cifar_val_224/extract_k16/{k}_16.npz")
+        features = np.load(f"/data/pwojcik/deit/dino_cifar_val_224_2/extract_k16/{k}_16.npz")
         tsne(features, k, in1k_classes)
 
     #PCA_path_tokens_seg(ret_dict)
