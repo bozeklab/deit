@@ -196,7 +196,7 @@ def tsne(features, k, classes_to_render):
     plt.title(f"M=16, K={k}")
     plt.gca().set_aspect("equal")
     plt.axis("off")
-    fig.savefig(f"deit_tsne_{k}.png")
+    fig.savefig(f"dino_tsne_{k}.png")
 
 
 
@@ -246,13 +246,13 @@ def main_setup(args):
 def main(args):
     model, data_loader = main_setup(args)
 
-    ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
-    #for k in range(0, 13):
-    #    features = np.load(f"/data/pwojcik/deit/deit_in1k/extract_k16/{k}_16.npz")
-    #    tsne(features, k, in1k_classes)
+    #ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
+    for k in [0, 4, 8]:
+        features = np.load(f"/data/pwojcik/deit/dino_tore_cifar_val/extract_k16/{k}_16.npz")
+        tsne(features, k, in1k_classes)
 
     #PCA_path_tokens_seg(ret_dict)
-    PCA_path_tokens_rgb(ret_dict)
+    #PCA_path_tokens_rgb(ret_dict)
 
 
 if __name__ == '__main__':
