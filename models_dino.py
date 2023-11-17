@@ -16,6 +16,7 @@ Mostly copy-paste from timm library.
 https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
 """
 import math
+import random
 from functools import partial
 
 import torch
@@ -237,6 +238,34 @@ class VisionTransformer(nn.Module):
     @property
     def last_attn(self):
         return self.blocks[-1].attn.last_attn
+
+    def comp_seq(self, x, K, masks):
+        assert masks is not None
+        x = self.prepare_tokens(x)
+
+        def subencoder(x):
+            for blk in self.blocks[:K]:
+                x = blk(x)
+            return x
+
+        xs = self.split_input(x, masks)
+        xs = [subencoder(x) for x in xs]
+        random.shuffle(xs)
+
+        cls_mean = torch.zeros_like(xs[0][:, [0], :])
+        xs_feats = []
+        ret = []
+        for i, x in enumerate(xs):
+            cls_mean = cls_mean * i / (i + 1) + x[:, [0], :] / (i + 1)
+            xs_feats.append(x[:, 1:, :])
+            x = torch.cat([cls_mean] + xs_feats, dim=1)
+
+            for blk in self.blocks[K:]:
+                x = blk(x)
+
+            x = self.norm(x)
+            ret.append(x[:, 0])
+        return torch.stack(ret)
 
     def comp_forward_afterK(self, x, K, masks):
         B = x.shape[0]
