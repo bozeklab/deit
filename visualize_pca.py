@@ -188,13 +188,13 @@ def tsne(features, k, classes_to_render):
     #                         optimizer="adam",
     #                         parametric=True,
     #                         print_freq_epoch=10)
-    #embd_ncvis = embedder_ncvis.fit_transform(x)
-    embd_ncvis = TSNE(n_components=2, learning_rate='auto', init = 'random', perplexity = 3).fit_transform(x)
+    #tsne = embedder_ncvis.fit_transform(x)
+    tsne = TSNE(n_components=2, learning_rate='auto', init = 'random').fit_transform(x)
 
     #plt.style.use('dark_background')
 
     fig = plt.figure()
-    plt.scatter(*embd_ncvis.T, c=y, alpha=0.8, s=3.5, cmap="Set1", edgecolor="none")
+    plt.scatter(*tsne.T, c=y, alpha=0.8, s=3.5, cmap="Set1", edgecolor="none")
     plt.title(f"$\kappa$={k}")
     plt.gca().set_aspect("equal")
     plt.axis("off")
