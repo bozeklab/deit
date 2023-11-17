@@ -29,7 +29,7 @@ def get_args_parser():
                         help='dataset path')
     parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'CIFAR10', 'IMNET', 'INAT', 'INAT19'],
                         type=str, help='Image Net dataset path')
-    parser.add_argument('--data-split', default='val', choices=['train', 'val'],
+    parser.add_argument('--data-split', default='val', choices=['train', 'val', 'test'],
                         type=str)
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
