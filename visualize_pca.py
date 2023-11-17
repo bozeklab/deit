@@ -19,6 +19,7 @@ import models
 import models_v2
 from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
+from torch import nn
 import cv2
 
 from datasets import FewExamplesDataset, build_dataset
@@ -167,6 +168,7 @@ def tsne(features, k, classes_to_render):
     import cne
     targets = features['targets']
     features = features['features']
+    nn.functional.normalize(features, dim=1, p=2)
 
     import random
     random_numbers = [random.randint(0, 999) for _ in range(50)]
