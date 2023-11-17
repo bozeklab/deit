@@ -168,17 +168,17 @@ def tsne(features, k, classes_to_render):
     import cne
     targets = features['targets']
     features = features['features']
-    nn.functional.normalize(features, dim=1, p=2)
+    nn.functional.normalize(torch.tensor(features), dim=1, p=2).numpy()
 
     import random
     random_numbers = [random.randint(0, 999) for _ in range(50)]
 
-    mask = torch.zeros(targets.shape).to(bool)
-    for i in range(0, 10):
-        mask_i = torch.tensor((targets == i))
-        mask = torch.logical_or(mask, mask_i)
-    y = targets[mask]
-    x = features[mask]
+    #mask = torch.zeros(targets.shape).to(bool)
+    #for i in range(0, 10):
+    #    mask_i = torch.tensor((targets == i))
+    #    mask = torch.logical_or(mask, mask_i)
+    #y = targets[mask]
+    #x = features[mask]
 
 
     print('Generating t-sne... for ', k)
