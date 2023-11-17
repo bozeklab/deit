@@ -193,9 +193,15 @@ def tsne(features, k, classes_to_render):
 
     #plt.style.use('dark_background')
 
-    fig = plt.figure()
-    plt.scatter(*tsne.T, c=y, alpha=0.8, s=3.5, cmap="tab10", edgecolor="none")
-    plt.title(f"$\kappa$={k}")
+    
+    fig = plt.figure(figsize=(8, 8))
+    plt.scatter(*tsne.T, c=y, alpha=1.0, s=12, cmap="tab10", edgecolor="none")
+    #title_text = plt.title(f"$\kappa$={k}", fontsize=30)
+    fig.suptitle(f"$\kappa$={k}", fontsize=30)  # Adjust y as needed
+   
+
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.1)
+    #title_text.set_position('top')
     plt.gca().set_aspect("equal")
     plt.axis("off")
     fig.savefig(f"dino_tore_tsne_{k}.png")
@@ -249,7 +255,7 @@ def main(args):
     model, data_loader = main_setup(args)
 
     #ret_dict = extract_patches_k16(data_loader, model, args.device, random_masks=False)
-    for k in [0, 4, 8]:
+    for k in [0, 4]:
         features = np.load(f"/data/pwojcik/deit/dino_tore_cifar_val/extract_k16/{k}_16.npz")
         tsne(features, k, in1k_classes)
 
