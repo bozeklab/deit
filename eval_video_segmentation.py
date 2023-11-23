@@ -35,7 +35,7 @@ from torchvision import transforms
 
 import utils
 from mask_const import get_division_masks_for_model, DIVISION_MASKS, DIVISION_SPECS_832, DIVISION_SPECS_896, \
-    division_masks_from_spec, DIVISION_SPECS_1152
+    division_masks_from_spec_ret, DIVISION_SPECS_1152
 
 
 @torch.no_grad()
@@ -165,7 +165,7 @@ def extract_feature(model, frame, device, return_h_w=False):
     elif frame.shape[2] == 1152:
         division_masks = DIVISION_SPECS_1152
     #division_masks = DIVISION_MASKS[480 // model.patch_embed.patch_size[0]]
-    masks = division_masks_from_spec(division_masks)[16][0]
+    masks = division_masks_from_spec_ret(division_masks)[16][0]
     out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=4, masks=masks, n=1, keep_token_order=True)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])

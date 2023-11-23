@@ -38,6 +38,13 @@ def division_masks_from_spec(specs):
         ret[k].append(_generate_masks(**v_rot))
     return ret
 
+
+def division_masks_from_spec_ret(specs):
+    ret = {}
+    for k, v in specs.items():
+        ret[k] = [_generate_masks(**v)]
+    return ret
+
 def division_ids_from_spec(specs):
     ret = {}
     for k, v in specs.items():
