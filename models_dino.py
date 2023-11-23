@@ -345,7 +345,7 @@ class VisionTransformer(nn.Module):
                 output.append(o)
         return output
 
-    def get_intermediate_layers_forward_afterK(self, x, K, masks, n=1, order_tokens=False):
+    def get_intermediate_layers_forward_afterK(self, x, K, masks, n=1, keep_token_order=False):
         B = x.shape[0]
         x = self.prepare_tokens(x)
 
@@ -371,7 +371,11 @@ class VisionTransformer(nn.Module):
 
                 xs_cls = torch.stack([x[:, [0], :] for x in xs])
                 xs_feats = [x[:, 1:, :] for x in xs]
-                x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
+                if keep_token_order:
+                    xs_feats = self._merge_patches_in_order(xs_feats, masks)
+                    x = torch.cat([xs_cls.mean(dim=0), xs_feats], dim=1)
+                else:
+                    x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
         else:
             x = subencoder(x)
 
@@ -379,10 +383,8 @@ class VisionTransformer(nn.Module):
         for i, blk in enumerate(self.blocks[K:]):
             x = blk(x)
             if len(self.blocks[K:]) - i <= n:
-                o = self.norm(x)
-                if order_tokens:
-                    o = self._merge_patches_in_order(o, masks)
-                output.append(o)
+                output.append(self.norm(x))
+
 
         return output
 
