@@ -330,4 +330,5 @@ if __name__ == '__main__':
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
         first_seg, seg_ori = read_seg(seg_path, args.patch_size)
-        eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette, device=device)
+        eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette, kappa=args.kappa,
+                                  device=device)
