@@ -135,7 +135,7 @@ class PatchEmbed(nn.Module):
 
     def forward(self, x):
         B, C, H, W = x.shape
-        self.grid_size = (H // self.patch_size, W // self.patch_size)
+        self.grid_size = (H // self.patch_size[0], W // self.patch_size[0])
         x = self.proj(x).flatten(2).transpose(1, 2)
         return x
 
