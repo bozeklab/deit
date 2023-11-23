@@ -180,6 +180,18 @@ class VisionTransformer(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
+    def _merge_patches_in_order(self, xs_feats, masks):
+        B, _, feat_dim = xs_feats[0].shape
+        device = xs_feats[0].device
+
+        x = torch.zeros(B, self.patch_embed.grid_size[0], self.patch_embed.grid_size[1], feat_dim).to(device)
+
+        for id, mask in enumerate(masks):
+            mask = torch.tensor(mask).unsqueeze(0).repeat(B, 1, 1).to(device)
+            x[mask] = xs_feats[id].reshape(B * xs_feats[id].shape[1], -1)
+
+        return x.view(B, self.patch_embed.grid_size[0]*self.patch_embed.grid_size[1], feat_dim)
+
     def interpolate_pos_encoding(self, x, w, h):
         npatch = x.shape[1] - 1
         N = self.pos_embed.shape[1] - 1
@@ -329,10 +341,11 @@ class VisionTransformer(nn.Module):
         for i, blk in enumerate(self.blocks):
             x = blk(x)
             if len(self.blocks) - i <= n:
-                output.append(self.norm(x))
+                o = self.norm(x)
+                output.append(o)
         return output
 
-    def get_intermediate_layers_forward_afterK(self, x, K, masks, n=1):
+    def get_intermediate_layers_forward_afterK(self, x, K, masks, n=1, order_tokens=False):
         B = x.shape[0]
         x = self.prepare_tokens(x)
 
@@ -366,7 +379,10 @@ class VisionTransformer(nn.Module):
         for i, blk in enumerate(self.blocks[K:]):
             x = blk(x)
             if len(self.blocks[K:]) - i <= n:
-                output.append(self.norm(x))
+                o = self.norm(x)
+                if order_tokens:
+                    o = self._merge_patches_in_order(o, masks)
+                output.append(o)
 
         return output
 
