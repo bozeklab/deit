@@ -43,6 +43,7 @@ def division_masks_from_spec_ret(specs):
     ret = {}
     for k, v in specs.items():
         ret[k] = [_generate_masks(**v)]
+    print([print(r.shape) for r in ret])
     return ret
 
 def division_ids_from_spec(specs):
