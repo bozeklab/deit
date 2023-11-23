@@ -39,7 +39,7 @@ from mask_const import get_division_masks_for_model, DIVISION_MASKS, DIVISION_SP
 
 
 @torch.no_grad()
-def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette, device='cuda'):
+def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg_ori, color_palette, kappa, device='cuda'):
     """
     Evaluate tracking on a video given first frame & segmentation
     """
@@ -52,7 +52,7 @@ def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg
     # first frame
     frame1, ori_h, ori_w = read_frame(frame_list[0])
     # extract first frame feature
-    frame1_feat = extract_feature(model, frame1, device=device).T  # dim x h*w
+    frame1_feat = extract_feature(model, frame1, kappa=kappa, device=device).T  # dim x h*w
 
     # saving first segmentation
     out_path = os.path.join(video_folder, "00000.png")
@@ -66,7 +66,7 @@ def eval_video_tracking_davis(args, model, frame_list, video_dir, first_seg, seg
         used_segs = [first_seg] + [pair[1] for pair in list(que.queue)]
 
         frame_tar_avg, feat_tar, mask_neighborhood = label_propagation(args, model, frame_tar, used_frame_feats,
-                                                                       used_segs, mask_neighborhood, device=device)
+                                                                       used_segs, kappa, mask_neighborhood, device=device)
 
         # pop out oldest frame if neccessary
         if que.qsize() == args.n_last_frames:
@@ -116,12 +116,12 @@ def norm_mask(mask):
     return mask
 
 
-def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_neighborhood=None, device='cuda'):
+def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, kappa, mask_neighborhood=None, device='cuda'):
     """
     propagate segs of frames in list_frames to frame_tar
     """
     ## we only need to extract feature of the target frame
-    feat_tar, h, w = extract_feature(model, frame_tar, device, return_h_w=True)
+    feat_tar, h, w = extract_feature(model, frame_tar, device, kappa=kappa, return_h_w=True)
 
     return_feat_tar = feat_tar.T  # dim x h*w
 
@@ -156,7 +156,7 @@ def label_propagation(args, model, frame_tar, list_frame_feats, list_segs, mask_
     return seg_tar, return_feat_tar, mask_neighborhood
 
 
-def extract_feature(model, frame, device, return_h_w=False):
+def extract_feature(model, frame, device, kappa, return_h_w=False):
     """Extract one frame feature everytime."""
     if frame.shape[2] == 832:
         division_masks = DIVISION_SPECS_832
@@ -166,7 +166,7 @@ def extract_feature(model, frame, device, return_h_w=False):
         division_masks = DIVISION_SPECS_1152
     #division_masks = DIVISION_MASKS[480 // model.patch_embed.patch_size[0]]
     masks = division_masks_from_spec_ret(division_masks)[16][0]
-    out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=4, masks=masks, n=1, keep_token_order=True)[0]
+    out = model.get_intermediate_layers_forward_afterK(frame.unsqueeze(0).to(device), K=kappa, masks=masks, n=1, keep_token_order=True)[0]
     out = out[:, 1:, :]  # we discard the [CLS] token
     h, w = int(frame.shape[1] / model.patch_embed.patch_size[0]), int(frame.shape[2] / model.patch_embed.patch_size[1])
     dim = out.shape[-1]
@@ -274,6 +274,7 @@ if __name__ == '__main__':
     parser.add_argument("--checkpoint_key", default="teacher", type=str,
                         help='Key to use in the checkpoint (example: "teacher")')
     parser.add_argument('--output_dir', default=".", help='Path where to save segmentations')
+    parser.add_argument('--kappa', default=0, type=int)
     parser.add_argument('--data_path', default='/path/to/davis/', type=str)
     parser.add_argument("--n_last_frames", type=int, default=7, help="number of preceeding frames")
     parser.add_argument("--size_mask_neighborhood", default=12, type=int,
