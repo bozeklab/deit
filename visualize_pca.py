@@ -24,7 +24,7 @@ import models_dino
 import cv2
 
 from datasets import FewExamplesDataset, build_dataset
-from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS
+from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS, DIVISION_SPECS_28_28
 from functools import partial
 from fvcore.nn import FlopCountAnalysis
 import torchvision.transforms as TT
@@ -68,7 +68,7 @@ def get_args_parser():
 def extract(data_loader, model, device, KMs, random_masks):
     # switch to evaluation mode
     model.eval()
-    division_masks = get_division_masks_for_model(model)
+    division_masks = DIVISION_SPECS_28_28
 
     ret = {
         f"{k}_{m}": {"features": [], "targets": []}
