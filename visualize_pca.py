@@ -232,10 +232,19 @@ def main_setup(args):
     model = model.to(args.device)
 
     if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint, map_location='cpu')
-        utils.interpolate_pos_embed(model, checkpoint['model'])
-        msg = model.load_state_dict(checkpoint['model'])
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
+        #url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
+        #pretrained_dict = torch.hub.load_state_dict_from_url(url=url)
+        pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
+        #pretrained_dict['pos_embed'] = pretrained_dict['pos_embed'][:, 1:, :]
+        #utils.interpolate_pos_embed(model, pretrained_dict)
+        msg = model.load_state_dict(pretrained_dict, strict=False)
+        #utils.interpolate_pos_embed(model, checkpoint['model'])
+        #msg = model.load_state_dict(checkpoint['model'])
         print("Loaded checkpoint: ", msg)
+    for param in model.parameters():
+        param.requires_grad = False
+    model.eval()
 
     args.data_set = 'FEW'
     dataset, _ = build_dataset(is_train=True, args=args)
@@ -260,7 +269,7 @@ def main(args):
         tsne(features, k, in1k_classes)
 
     #PCA_path_tokens_seg(ret_dict)
-    #PCA_path_tokens_rgb(ret_dict)
+    PCA_path_tokens_rgb(ret_dict)
 
 
 if __name__ == '__main__':
