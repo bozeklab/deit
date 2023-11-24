@@ -280,7 +280,7 @@ class VisionTransformer(nn.Module):
             ret.append(x[:, 0])
         return torch.stack(ret)
 
-    def comp_forward_afterK(self, x, K, masks):
+    def comp_forward_afterK(self, x, K, masks, keep_token_order=False):
         B = x.shape[0]
         x = self.prepare_tokens(x)
 
@@ -306,7 +306,11 @@ class VisionTransformer(nn.Module):
 
                 xs_cls = torch.stack([x[:, [0], :] for x in xs])
                 xs_feats = [x[:, 1:, :] for x in xs]
-                x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
+                if keep_token_order:
+                    xs_feats = self._merge_patches_in_order(xs_feats, masks)
+                    x = torch.cat([xs_cls.mean(dim=0), xs_feats], dim=1)
+                else:
+                    x = torch.cat([xs_cls.mean(dim=0)] + xs_feats, dim=1)
         else:
             x = subencoder(x)
 
