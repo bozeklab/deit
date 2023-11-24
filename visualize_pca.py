@@ -34,7 +34,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Script containing tasks with inference only', add_help=False)
     parser.add_argument('--batch-size', default=4, type=int)
     # Model parameters
-    parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
+    parser.add_argument('--model', default='vit_small_8', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--input_size', default=224, type=int, help='images input size')
     parser.add_argument('--eval-crop-ratio', default=1., type=float, help="Crop ratio for evaluation")
