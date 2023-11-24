@@ -95,7 +95,7 @@ def extract(data_loader, model, device, KMs, random_masks):
     return ret
 
 
-def PCA_path_tokens_rgb(features):
+def PCA_path_tokens_rgb(features, output_dir):
     for kM in features.keys():
         bsz, L, feat_dim = features[kM]['features'][0].shape
         patch_tokens = features[kM]['features'][0].reshape([bsz, feat_dim, -1])
@@ -136,7 +136,7 @@ def PCA_path_tokens_rgb(features):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features_rgb[i])
             plt.axis('off')  # Turn off axis labels
-            fig.savefig(f"dino_pca/output_3_rgb_{kM}.png")
+            fig.savefig(f"{output_dir}/output_3_rgb_{kM}.png")
         print('Saved PCA matching')
 
 
@@ -267,7 +267,7 @@ def main(args):
     #    tsne(features, k, in1k_classes)
 
     #PCA_path_tokens_seg(ret_dict)
-    PCA_path_tokens_rgb(ret_dict)
+    PCA_path_tokens_rgb(ret_dict, args.output_dir)
 
 
 if __name__ == '__main__':
