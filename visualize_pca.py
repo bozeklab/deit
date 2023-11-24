@@ -136,7 +136,7 @@ def PCA_path_tokens_rgb(features):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features_rgb[i])
             plt.axis('off')  # Turn off axis labels
-            fig.savefig(f"dino_tore_pca/output_3_rgb_{kM}.png")
+            fig.savefig(f"dino_pca/output_3_rgb_{kM}.png")
         print('Saved PCA matching')
 
 
