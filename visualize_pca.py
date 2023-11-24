@@ -87,7 +87,7 @@ def extract(data_loader, model, device, KMs, random_masks):
             else:
                 masks = division_masks[m][0]
             input_tensor = input_tensor.to(device, non_blocking=True)
-            features = model.get_intermediate_layers_forward_afterK(input_tensor.unsqueeze(0), K=k, masks=masks, n=1, keep_token_order=True)[0]
+            features = model.get_intermediate_layers_forward_afterK(input_tensor, K=k, masks=masks, n=1, keep_token_order=True)[0]
             ret[f"{k}_{m}"]["features"].append(features)
 
     return ret
