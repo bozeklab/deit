@@ -20,6 +20,7 @@ import models_v2
 from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
 from torch import nn
+import models_dino
 import cv2
 
 from datasets import FewExamplesDataset, build_dataset
