@@ -199,7 +199,6 @@ def tsne(features, k, classes_to_render):
     plt.scatter(*tsne.T, c=y, alpha=1.0, s=12, cmap="tab10", edgecolor="none")
     #title_text = plt.title(f"$\kappa$={k}", fontsize=30)
     fig.suptitle(f"$\kappa$={k}", fontsize=30)  # Adjust y as needed
-   
 
     plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.1)
     #title_text.set_position('top')
@@ -234,14 +233,8 @@ def main_setup(args):
 
     if args.checkpoint is not None:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
-        #url = "https://dl.fbaipublicfiles.com/dino/" + "dino_deitsmall8_300ep_pretrain/dino_deitsmall8_300ep_pretrain.pth"
-        #pretrained_dict = torch.hub.load_state_dict_from_url(url=url)
         pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
-        #pretrained_dict['pos_embed'] = pretrained_dict['pos_embed'][:, 1:, :]
-        #utils.interpolate_pos_embed(model, pretrained_dict)
         msg = model.load_state_dict(pretrained_dict, strict=False)
-        #utils.interpolate_pos_embed(model, checkpoint['model'])
-        #msg = model.load_state_dict(checkpoint['model'])
         print("Loaded checkpoint: ", msg)
     for param in model.parameters():
         param.requires_grad = False
