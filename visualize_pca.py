@@ -210,7 +210,7 @@ def tsne(features, k, classes_to_render):
 
 
 def extract_patches_k16(data_loader, model, device, random_masks, *args, **kwargs):
-    KMs = [[k, 9] for k in range(len(model.blocks) + 1)]
+    KMs = [[k, 16] for k in range(9)]
     return extract(data_loader, model, device, KMs=KMs, random_masks=random_masks)
 
 
