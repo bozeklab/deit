@@ -36,7 +36,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--input_size', default=448, type=int, help='images input size')
+    parser.add_argument('--input_size', default=224, type=int, help='images input size')
     parser.add_argument('--eval-crop-ratio', default=1., type=float, help="Crop ratio for evaluation")
 
     parser.add_argument('--data-path', default=f'~/datasets/imagenet/ILSVRC/Data/CLS-LOC/', type=str,
