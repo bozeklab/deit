@@ -104,8 +104,10 @@ def PCA_path_tokens_rgb(features):
 
         total_features = patch_tokens.reshape(bsz * patch_h * patch_h, feat_dim) #4(*H*w, 1024)
 
+        total_features = total_features.detach().cpu()
+
         pca = PCA(n_components=3)
-        pca.fit(total_features.detach().cpu())
+        pca.fit(total_features)
         pca_features = pca.transform(total_features)
 
         pca_features_bg = pca_features[:, 0] < 0.45  # from first histogram
