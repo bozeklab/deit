@@ -92,7 +92,7 @@ def build_dataset(is_train, args):
     if args.data_set == 'FEW':
         transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize((448, 448)),  # Adjust the image size as needed
+            transforms.Resize((224, 224)),  # Adjust the image size as needed
             transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
         ])
         dataset = FewExamplesDataset(args.data_path, train=is_train, transform=transform)
