@@ -75,7 +75,7 @@ for key, value in DIVISION_SPECS_14_14.items():
 
 DIVISION_SPECS_56_56 = {}
 for key, value in DIVISION_SPECS_14_14.items():
-    DIVISION_SPECS_28_28[key] = {
+    DIVISION_SPECS_56_56[key] = {
         "xs": [x * 4 for x in value["xs"]],
         "ys": [y * 4 for y in value["ys"]],
     }
