@@ -24,7 +24,7 @@ import models_dino
 import cv2
 
 from datasets import FewExamplesDataset, build_dataset
-from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS, DIVISION_SPECS_28_28, \
+from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS, DIVISION_SPECS_56_56, \
     division_masks_from_spec
 from functools import partial
 from fvcore.nn import FlopCountAnalysis
@@ -38,7 +38,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--model', default='vit_small_8', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--input_size', default=224, type=int, help='images input size')
+    parser.add_argument('--input_size', default=448, type=int, help='images input size')
     parser.add_argument('--eval-crop-ratio', default=1., type=float, help="Crop ratio for evaluation")
 
     parser.add_argument('--data-path', default=f'~/datasets/imagenet/ILSVRC/Data/CLS-LOC/', type=str,
@@ -69,7 +69,7 @@ def get_args_parser():
 def extract(data_loader, model, device, KMs, random_masks):
     # switch to evaluation mode
     model.eval()
-    division_masks = division_masks_from_spec(DIVISION_SPECS_28_28)
+    division_masks = division_masks_from_spec(DIVISION_SPECS_56_56)
 
     ret = {
         f"{k}_{m}": {"features": [], "targets": []}
@@ -135,6 +135,7 @@ def PCA_path_tokens_rgb(features):
         for i in range(pca_features_rgb.shape[0]):
             plt.subplot(2, 2, i + 1)
             plt.imshow(pca_features_rgb[i])
+            plt.axis('off')  # Turn off axis labels
             fig.savefig(f"dino_tore_pca/output_3_rgb_{kM}.png")
         print('Saved PCA matching')
 
@@ -198,7 +199,6 @@ def tsne(features, k, classes_to_render):
 
     #plt.style.use('dark_background')
 
-    
     fig = plt.figure(figsize=(8, 8))
     plt.scatter(*tsne.T, c=y, alpha=1.0, s=12, cmap="tab10", edgecolor="none")
     #title_text = plt.title(f"$\kappa$={k}", fontsize=30)
@@ -231,7 +231,7 @@ def main_setup(args):
         args.model,
         pretrained=False,
         num_classes=1000,
-        img_size=(args.input_size, args.input_size)
+        img_size=(224, 224)
     )
     model = model.to(args.device)
 
