@@ -47,15 +47,13 @@ class resmlp_models(nn.Module):
                 drop_path_rate=0.0,init_scale=1e-4):
         super().__init__()
 
-
-
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim  
 
         self.patch_embed = Patch_layer(
                 img_size=img_size, patch_size=patch_size, in_chans=int(in_chans), embed_dim=embed_dim)
         num_patches = self.patch_embed.num_patches
-        dpr = [drop_path_rate for i in range(depth)]
+        dpr = [drop_path_rate for _ in range(depth)]
 
         self.blocks = nn.ModuleList([
             layers_scale_mlp_blocks(

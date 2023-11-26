@@ -3,13 +3,38 @@
 import os
 import json
 
+import torch
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import ImageFolder, default_loader
-from torchvision.datasets import StanfordCars, Flowers102
+from torchvision.datasets import StanfordCars, Flowers102, VisionDataset
+from torch.utils.data import Dataset, DataLoader
 
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data import create_transform
+from PIL import Image
 
+
+class FewExamplesDataset(VisionDataset):
+    def __init__(self, root, transform=None, train=True):
+        super(FewExamplesDataset, self).__init__(root, transform=transform)
+        self.image_paths = os.path.join(root, f'{"train" if train else "test"}')
+        self.transform = transform
+        self.to_tensor = transforms.ToTensor()
+        self.file_list = [filename for filename in os.listdir(self.image_paths) if filename.endswith('.jpg')]
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.image_paths, self.file_list[idx])
+        orig_image = Image.open(img_path)
+
+        image = self.transform(orig_image)
+
+        orig_image = self.to_tensor(orig_image)
+        orig_image = transforms.Resize((image.shape[1], image.shape[2]))(orig_image)
+
+        return orig_image, image
 
 class INatDataset(ImageFolder):
     def __init__(self, root, train=True, year=2018, transform=None, target_transform=None,
@@ -64,12 +89,20 @@ class PatchedImageFolder(ImageFolder):
         return classes, class_to_idx
 
 def build_dataset(is_train, args):
-    transform = build_transform(is_train, args)
-
+    if args.data_set == 'FEW':
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize((448, 448)),  # Adjust the image size as needed
+            transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
+        ])
+        dataset = FewExamplesDataset(args.data_path, train=is_train, transform=transform)
+        nb_classes = -1
+    else:
+        transform = build_transform(is_train, args)
     if args.data_set == 'CIFAR100':
         dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform)
         nb_classes = 100
-    if args.data_set == 'CIFAR10':
+    elif args.data_set == 'CIFAR10':
         dataset = datasets.CIFAR10(args.data_path, train=is_train, transform=transform)
         nb_classes = 10
     elif args.data_set == 'IMNET2':

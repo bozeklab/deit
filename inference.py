@@ -10,6 +10,7 @@ from timm.utils import accuracy
 import numpy as np
 import models
 import models_v2
+import models_dino
 from mask_const import sample_masks, get_division_masks_for_model, DIVISION_IDS, DIVISION_MASKS
 from functools import partial
 from fvcore.nn import FlopCountAnalysis
@@ -19,16 +20,16 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Script containing tasks with inference only', add_help=False)
     parser.add_argument('--batch-size', default=64, type=int)
     # Model parameters
-    parser.add_argument('--model', default='deit_small_patch16_LS', type=str, metavar='MODEL',
+    parser.add_argument('--model', default='vit_small_8', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--input_size', default=224, type=int, help='images input size')
     parser.add_argument('--eval-crop-ratio', default=1., type=float, help="Crop ratio for evaluation")
 
     parser.add_argument('--data-path', default=f'~/datasets/imagenet/ILSVRC/Data/CLS-LOC/', type=str,
                         help='dataset path')
-    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19'],
+    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'CIFAR10', 'IMNET', 'INAT', 'INAT19'],
                         type=str, help='Image Net dataset path')
-    parser.add_argument('--data-split', default='val', choices=['train', 'val'],
+    parser.add_argument('--data-split', default='val', choices=['train', 'val', 'test'],
                         type=str)
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
@@ -45,6 +46,7 @@ def get_args_parser():
     parser.add_argument('--distributed', action='store_true', default=False, help='Enabling distributed training')
     parser.add_argument('--world_size', default=1, type=int,
                         help='number of distributed processes')
+    parser.add_argument('--local_rank', default=-1, type=int)
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
 
     parser.add_argument('--evaluate', nargs='*', default=[])
@@ -108,7 +110,6 @@ def evaluate(data_loader, model, device, KMs, random_masks, seq: bool=False, gro
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
-
 @torch.no_grad()
 def extract(data_loader, model, device, KMs, random_masks, seq: bool=False):
     # switch to evaluation mode
@@ -129,7 +130,7 @@ def extract(data_loader, model, device, KMs, random_masks, seq: bool=False):
                     masks = sample_masks(division_masks, m)
                 else:
                     masks = division_masks[m][0]
-                features = model(images, K=k, masks=masks, seq=seq, cls_only=True).cpu().numpy()
+                features = model(images, K=k, masks=masks).cpu().numpy()
                 ret[f"{k}_{m}"]["features"].append(features)
                 ret[f"{k}_{m}"]["targets"].append(targets)
 
@@ -153,7 +154,7 @@ def evaluate_km(data_loader, model, device, group_by_class, random_masks, *args,
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class, random_masks=random_masks)
 
 def evaluate_01_816(data_loader, model, device, group_by_class, random_masks, *args, **kwargs):
-    KMs = [[0,1], [8,16]]
+    KMs = [[0, 1], [8, 16]]
     return evaluate(data_loader, model, device, KMs=KMs, group_by_class=group_by_class, random_masks=random_masks)
 
 def evaluate_k16_seq(data_loader, model, device, group_by_class, random_masks, *args, **kwargs):
@@ -181,20 +182,21 @@ def extract_k16(data_loader, model, device, random_masks, *args, **kwargs):
     return extract(data_loader, model, device, KMs=KMs, random_masks=random_masks)
 
 def extract_01(data_loader, model, device, random_masks, *args, **kwargs):
-    return extract(data_loader, model, device, KMs=[[0,1]], random_masks=random_masks)
+    return extract(data_loader, model, device, KMs=[[0, 1]], random_masks=random_masks)
 
 
 # -------------------- FLOPS ---------------------
 
 def count_flops(create_model_fn, img_size):
-    IMG = torch.zeros(1,3,img_size,img_size)
+    IMG = torch.zeros(1, 3, img_size, img_size)
     division_masks = DIVISION_MASKS[14][16][0]
     division_ids = DIVISION_IDS[14][16][0]
     imgs = []
     for divm in division_masks:
-        divm = np.expand_dims(divm, [0,1]).repeat(3, axis=1).repeat(16, axis=2).repeat(16, axis=3)
-        H, W = divm.sum(axis=2).max(), divm.sum(axis=3).max()
-        imgs.append(IMG[divm].reshape(1,3,H, W))
+        divm = np.expand_dims(divm, [0, 1]).repeat(3, axis=1).repeat(16, axis=2).repeat(16, axis=3)
+        divm = np.expand_dims(divm, axis=0)
+        H, W = divm.sum(axis=3).max(), divm.sum(axis=4).max()
+        imgs.append(IMG[divm].reshape(1, 3, H, W))
 
     with torch.no_grad():
         flops = {}
@@ -231,10 +233,10 @@ def default_transform_dataset(is_train, args):
     transform = transforms.Compose(t)
 
     if args.data_set == 'CIFAR100':
-        dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform)
+        dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform, download=True)
         nb_classes = 100
     if args.data_set == 'CIFAR10':
-        dataset = datasets.CIFAR10(args.data_path, train=is_train, transform=transform)
+        dataset = datasets.CIFAR10(args.data_path, train=is_train, transform=transform, download=True)
         nb_classes = 10
     elif args.data_set == 'IMNET2':
         root = os.path.join(args.data_path, 'train' if is_train else 'val')
@@ -266,7 +268,8 @@ def main_setup(args):
     with open(os.path.join(output_dir, "args.json"), "w") as f:
         json.dump(args.__dict__, f, indent=2)
 
-    utils.init_distributed_mode(args)
+    if args.distributed:
+        utils.init_distributed_mode(args)
     dataset, nb_classes = default_transform_dataset(is_train=args.data_split == "train", args=args)
     with open(os.path.join(output_dir, "class_to_idx.json"), "a") as f:
         f.write(json.dumps(dataset.class_to_idx))
@@ -294,7 +297,7 @@ def main_setup(args):
         args.model,
         pretrained=False,
         num_classes=nb_classes,
-        img_size=args.input_size
+        img_size=(args.input_size, args.input_size)
     )
     model = model.to(args.device)
     model_without_ddp = model
@@ -304,10 +307,13 @@ def main_setup(args):
         model_without_ddp = model.module
     
     if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint, map_location='cpu')
-        model_without_ddp.load_state_dict(checkpoint['model'])
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')['teacher']
+        pretrained_dict = {k.replace('backbone.', ''): v for k, v in checkpoint.items()}
+        msg = model.load_state_dict(pretrained_dict, strict=False)
+        print("Loaded checkpoint: ", msg)
 
     return model, data_loader, nb_classes, output_dir
+
 
 def main(args):
     model, data_loader, nb_classes, output_dir = main_setup(args)
@@ -340,14 +346,17 @@ def main(args):
             pretrained=False,
             num_classes=nb_classes,
             img_size=args.input_size
+
         )
         flops = count_flops(create_model_fn, args.input_size)
-        flat_flops = [(str(k),i, v/1000000000) for k, l in flops.items() for i, v in enumerate(l)]
+        flat_flops = [(str(k), i, v / 1e9) for k, l in flops.items() for i, v in enumerate(l)]
         df = pd.DataFrame(flat_flops, columns=["K", "i", "GFLOPs"])
         pd.DataFrame.to_csv(df, os.path.join(output_dir, "count_flops.csv"))
 
 
 if __name__ == '__main__':
+    import torch.multiprocessing
+    torch.multiprocessing.set_sharing_strategy('file_system')
     parser = argparse.ArgumentParser('Evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     main(args)
